@@ -132,7 +132,7 @@ func TestCategoriesFake(t *testing.T) {
 	}
 }
 
-func TestOrderingFake(t *testing.T) {
+func TestOrderingsFake(t *testing.T) {
 	input := `
 	<thead id="tableHead">
 		<tr class="header">
@@ -210,5 +210,41 @@ func TestStringers(t *testing.T) {
 	o := &Ordering{Title: "test", ID: "0"}
 	if o.String() != "test" {
 		t.Errorf("Ordering stringer mismatch")
+	}
+}
+
+func TestCategoriesReal(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
+	s := NewSite()
+	err := s.UpdateCategories()
+	if err != nil {
+		t.Errorf("Network error: %s", err)
+		return
+	}
+	if _, p := s.Categories[""]["all"]; !p {
+		t.Errorf("Default '/all' category not found?")
+	}
+	if _, err := s.FindCategory("", "hd - tv shows"); err != nil {
+		t.Errorf("Unique category '/hd - tv shows' not found?")
+	}
+}
+
+func TestOrderingsReal(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
+	s := NewSite()
+	err := s.UpdateOrderings()
+	if err != nil {
+		t.Errorf("Network error: %s", err)
+		return
+	}
+	if _, p := s.Orderings["name"]; !p {
+		t.Errorf("Raw ordering 'name' not found?")
+	}
+	if _, err := s.FindOrdering("seeders"); err != nil {
+		t.Errorf("Ordering 'seeders' not found?")
 	}
 }
