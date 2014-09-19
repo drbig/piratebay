@@ -102,6 +102,20 @@ func TestCategoriesFake(t *testing.T) {
     t.Errorf("Didn'f find fully-qualified category 'video/other': %s", err)
   }
 
+  // category finder - broken queries
+  cat, err = s.FindCategory("", "")
+  if err == nil {
+    t.Errorf("Didn't fail with empty categories loaded")
+  }
+  cat, err = s.FindCategory("whatever", "whatever")
+  if err == nil {
+    t.Errorf("Didn't fail with nonexistent category group")
+  }
+  cat, err = s.FindCategory("video", "whatever")
+  if err == nil {
+    t.Errorf("Didn't fail with nonexistent category")
+  }
+
   // category finder - no categories
   s = NewSite()
   _, err = s.FindCategory("", "all")
