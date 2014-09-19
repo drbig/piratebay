@@ -1,7 +1,7 @@
 package piratebay
 
 import (
-	//"fmt"
+	"fmt"
 	"testing"
 )
 
@@ -109,11 +109,11 @@ func TestCategoriesFake(t *testing.T) {
 	// category finder - broken queries
 	_, err = s.FindCategory("audio", "")
 	if err == nil {
-    t.Errorf("Didn't fail with empty category (1): %s", cat)
+		t.Errorf("Didn't fail with empty category (1): %s", cat)
 	}
 	_, err = s.FindCategory("", "")
 	if err == nil {
-    t.Errorf("Didn't fail with empty category (2): %s", cat)
+		t.Errorf("Didn't fail with empty category (2): %s", cat)
 	}
 	_, err = s.FindCategory("whatever", "whatever")
 	if err == nil {
@@ -133,7 +133,7 @@ func TestCategoriesFake(t *testing.T) {
 }
 
 func TestOrderingFake(t *testing.T) {
-  input := `
+	input := `
 	<thead id="tableHead">
 		<tr class="header">
 			<th><a href="/search/a/0/13/0" title="Order by Type">Type</a></th>
@@ -143,57 +143,72 @@ func TestOrderingFake(t *testing.T) {
 		</tr>
 	</thead>
 `
-  ordrRaw := map[string]string{
-    "type": "13",
-    "name": "1",
-    "uploaded": "3",
-    "size": "5",
-    "seeders": "7",
-    "leechers": "9",
-    "uled by": "11",
-  }
+	ordrRaw := map[string]string{
+		"type":     "13",
+		"name":     "1",
+		"uploaded": "3",
+		"size":     "5",
+		"seeders":  "7",
+		"leechers": "9",
+		"uled by":  "11",
+	}
 
-  s := NewSite()
-  s.parseOrderings(input)
+	s := NewSite()
+	s.parseOrderings(input)
 
-  // raw orderings parsing
-  for title, v := range ordrRaw {
-    value, present := s.Orderings[title]
-    if !present {
-      t.Errorf("Raw ordering '%s' not found", title)
-      continue
-    }
-    if value != v {
-      t.Errorf("Raw ordering '%s' value mismatch: %s != %s", title, value, v)
-    }
-  }
+	// raw orderings parsing
+	for title, v := range ordrRaw {
+		value, present := s.Orderings[title]
+		if !present {
+			t.Errorf("Raw ordering '%s' not found", title)
+			continue
+		}
+		if value != v {
+			t.Errorf("Raw ordering '%s' value mismatch: %s != %s", title, value, v)
+		}
+	}
 
-  // ordering finder
-  for title, v := range ordrRaw {
-    ordr, err := s.FindOrdering(title)
-    if err != nil {
-      t.Errorf("Didn't find ordering '%s'", title)
-      continue
-    }
-    if ordr.ID != v {
-      t.Errorf("Ordering '%s' value mismatch: %s != %s", title, ordr.ID, v)
-    }
-  }
+	// ordering finder
+	for title, v := range ordrRaw {
+		ordr, err := s.FindOrdering(title)
+		if err != nil {
+			t.Errorf("Didn't find ordering '%s'", title)
+			continue
+		}
+		if ordr.ID != v {
+			t.Errorf("Ordering '%s' value mismatch: %s != %s", title, ordr.ID, v)
+		}
+	}
 
-  // ordering finder - broken queries
-  _, err := s.FindOrdering("")
-  if err == nil {
-    t.Errorf("Didn't fail with empty ordering")
-  }
-  _, err = s.FindOrdering("whatever")
-  if err == nil {
-    t.Errorf("Didn't fail with nonexistent ordering")
-  }
+	// ordering finder - broken queries
+	_, err := s.FindOrdering("")
+	if err == nil {
+		t.Errorf("Didn't fail with empty ordering")
+	}
+	_, err = s.FindOrdering("whatever")
+	if err == nil {
+		t.Errorf("Didn't fail with nonexistent ordering")
+	}
 
-  // ordering finder - no orderings
-  s = NewSite()
-  _, err = s.FindOrdering("whatever")
-  if err == nil {
-    t.Errorf("Didn't fail with no orderings loaded")
-  }
+	// ordering finder - no orderings
+	s = NewSite()
+	_, err = s.FindOrdering("whatever")
+	if err == nil {
+		t.Errorf("Didn't fail with no orderings loaded")
+	}
+}
+
+func TestStringers(t *testing.T) {
+	s := NewSite()
+	if s.String() != fmt.Sprintf("%s", ROOTURI) {
+		t.Errorf("Site stringer mismatch")
+	}
+	c := &Category{Group: "test", Title: "test", ID: "0"}
+	if c.String() != "test/test" {
+		t.Errorf("Category stringer mismatch")
+	}
+	o := &Ordering{Title: "test", ID: "0"}
+	if o.String() != "test" {
+		t.Errorf("Ordering stringer mismatch")
+	}
 }

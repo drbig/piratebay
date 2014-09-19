@@ -148,16 +148,16 @@ func (s *Site) parseOrderings(input string) {
 func (s *Site) FindCategory(group string, category string) (*Category, error) {
 	if s.Categories == nil {
 		return nil, fmt.Errorf("Categories not loaded")
-  }
-  if category == "" {
-    return nil, fmt.Errorf("Category not specified")
-  }
-  if group != "" {
-    categories, present := s.Categories[group]
-    if !present {
-      return nil, fmt.Errorf("Category group '%s' not found", group)
-    }
-    value, present := categories[category]
+	}
+	if category == "" {
+		return nil, fmt.Errorf("Category not specified")
+	}
+	if group != "" {
+		categories, present := s.Categories[group]
+		if !present {
+			return nil, fmt.Errorf("Category group '%s' not found", group)
+		}
+		value, present := categories[category]
 		if !present {
 			return nil, fmt.Errorf("Category '%s/%s' not found", group, category)
 		}
@@ -193,8 +193,8 @@ func (s *Site) FindOrdering(ordering string) (*Ordering, error) {
 		return nil, fmt.Errorf("Orderings not loaded")
 	}
 	if ordering == "" {
-	  return nil, fmt.Errorf("Ordering not specified")
-  }
+		return nil, fmt.Errorf("Ordering not specified")
+	}
 	value, present := s.Orderings[ordering]
 	if !present {
 		return nil, fmt.Errorf("Ordering '%s' not found", ordering)
