@@ -198,6 +198,103 @@ func TestOrderingsFake(t *testing.T) {
 	}
 }
 
+func TestSearchFake(t *testing.T) {
+	input := `
+<h2><span>Search results: a</span>&nbsp;Displaying hits from 1 to 30 (approx 999 found)</h2>
+<div id="SearchResults"><div id="content">
+			<div id="sky-right">
+				 <iframe src="//cdn2.adexprt.com/exo_na/sky2.html" width="160" height="600" frameborder="0" scrolling="no"></iframe>
+			</div>
+	<div id="main-content">
+
+		 <iframe src="//cdn1.adexprt.com/exo_na/center.html" width="728" height="90" frameborder="0" scrolling="no"></iframe>
+	<table id="searchResult">
+	<thead id="tableHead">
+		<tr class="header">
+			<th><a href="/search/a/0/13/0" title="Order by Type">Type</a></th>
+			<th><div class="sortby"><a href="/search/a/0/1/0" title="Order by Name">Name</a> (Order by: <a href="/search/a/0/3/0" title="Order by Uploaded">Uploaded</a>, <a href="/search/a/0/5/0" title="Order by Size">Size</a>, <span style="white-space: nowrap;"><a href="/search/a/0/11/0" title="Order by ULed by">ULed by</a></span>, <a href="/search/a/0/7/0" title="Order by Seeders">SE</a>, <a href="/search/a/0/9/0" title="Order by Leechers">LE</a>)</div><div class="viewswitch"> View: <a href="/switchview.php?view=s">Single</a> / Double&nbsp;</div></th>
+			<th><abbr title="Seeders"><a href="/search/a/0/7/0" title="Order by Seeders">SE</a></abbr></th>
+			<th><abbr title="Leechers"><a href="/search/a/0/9/0" title="Order by Leechers">LE</a></abbr></th>
+		</tr>
+	</thead>
+	<tr>
+		<td class="vertTh">
+			<center>
+				<a href="/browse/200" title="More from this category">Video</a><br />
+				(<a href="/browse/205" title="More from this category">TV shows</a>)
+			</center>
+		</td>
+		<td>
+<div class="detName">			<a href="/torrent/11068355/Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG" class="detLink" title="Details for Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG">Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG</a>
+</div>
+<a href="magnet:?xt=urn:btih:14cf93721298e1b6694205019fce360dfbcf4164&dn=Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337" title="Download this torrent using magnet"><img src="/static/img/icon-magnet.gif" alt="Magnet link" /></a>			<a href="//piratebaytorrents.info/11068355/Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG.11068355.TPB.torrent" title="Download this torrent"><img src="/static/img/dl.gif" class="dl" alt="Download" /></a><a href="/user/TvTeam"><img src="/static/img/vip.gif" alt="VIP" title="VIP" style="width:11px;" border='0' /></a><img src="/static/img/11x11p.png" />
+			<font class="detDesc">Uploaded <b>11&nbsp;mins&nbsp;ago</b>, Size 244.08&nbsp;MiB, ULed by <a class="detDesc" href="/user/TvTeam/" title="Browse TvTeam">TvTeam</a></font>
+		</td>
+		<td align="right">0</td>
+		<td align="right">0</td>
+	</tr>
+	<tr>
+		<td class="vertTh">
+			<center>
+				<a href="/browse/600" title="More from this category">Other</a><br />
+				(<a href="/browse/699" title="More from this category">Other</a>)
+			</center>
+		</td>
+		<td>
+<div class="detName">			<a href="/torrent/11068354/Nayma_-_Responsive_Multi-Purpose_WordPress_Theme" class="detLink" title="Details for Nayma - Responsive Multi-Purpose WordPress Theme">Nayma - Responsive Multi-Purpose WordPress Theme</a>
+</div>
+<a href="magnet:?xt=urn:btih:55bc118cd26376b888ac1ebc8c2fbbc250c4ea02&dn=Nayma+-+Responsive+Multi-Purpose+WordPress+Theme&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337" title="Download this torrent using magnet"><img src="/static/img/icon-magnet.gif" alt="Magnet link" /></a>			<a href="//piratebaytorrents.info/11068354/Nayma_-_Responsive_Multi-Purpose_WordPress_Theme.11068354.TPB.torrent" title="Download this torrent"><img src="/static/img/dl.gif" class="dl" alt="Download" /></a><img src="/static/img/icon_image.gif" alt="This torrent has a cover image" title="This torrent has a cover image" /><img src="/static/img/11x11p.png" /><img src="/static/img/11x11p.png" />
+			<font class="detDesc">Uploaded <b>11&nbsp;mins&nbsp;ago</b>, Size 23.63&nbsp;MiB, ULed by <a class="detDesc" href="/user/nulledGOD/" title="Browse nulledGOD">nulledGOD</a></font>
+		</td>
+		<td align="right">0</td>
+		<td align="right">0</td>
+	</tr>
+	<tr>
+		<td class="vertTh">
+			<center>
+				<a href="/browse/500" title="More from this category">Porn</a><br />
+				(<a href="/browse/501" title="More from this category">Movies</a>)
+			</center>
+		</td>
+		<td>
+<div class="detName">			<a href="/torrent/11068352/Girlfriends_Films_-_Cheer_Squad_Sleepovers_9" class="detLink" title="Details for Girlfriends Films - Cheer Squad Sleepovers 9">Girlfriends Films - Cheer Squad Sleepovers 9</a>
+</div>
+<a href="magnet:?xt=urn:btih:e0fda0867e7c7ddf0517461b6a9063656f3a3d3e&dn=Girlfriends+Films+-+Cheer+Squad+Sleepovers+9&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337" title="Download this torrent using magnet"><img src="/static/img/icon-magnet.gif" alt="Magnet link" /></a>			<a href="//piratebaytorrents.info/11068352/Girlfriends_Films_-_Cheer_Squad_Sleepovers_9.11068352.TPB.torrent" title="Download this torrent"><img src="/static/img/dl.gif" class="dl" alt="Download" /></a><img src="/static/img/icon_image.gif" alt="This torrent has a cover image" title="This torrent has a cover image" /><a href="/user/irealu69"><img src="/static/img/vip.gif" alt="VIP" title="VIP" style="width:11px;" border='0' /></a><img src="/static/img/11x11p.png" />
+			<font class="detDesc">Uploaded <b>15&nbsp;mins&nbsp;ago</b>, Size 1.47&nbsp;GiB, ULed by <a class="detDesc" href="/user/irealu69/" title="Browse irealu69">irealu69</a></font>
+		</td>
+		<td align="right">0</td>
+		<td align="right">0</td>
+	</tr>
+	<tr>
+		<td class="vertTh">
+			<center>
+				<a href="/browse/500" title="More from this category">Porn</a><br />
+				(<a href="/browse/501" title="More from this category">Movies</a>)
+			</center>
+		</td>
+		<td>
+<div class="detName">			<a href="/torrent/11068348/Big_Tit_Mother_Fuckers_4_DVDRip.mp4" class="detLink" title="Details for Big Tit Mother Fuckers 4 DVDRip.mp4">Big Tit Mother Fuckers 4 DVDRip.mp4</a>
+</div>
+<a href="magnet:?xt=urn:btih:98171109d50ab8c83b9a53d0ba86ef829de3cd05&dn=Big+Tit+Mother+Fuckers+4+DVDRip.mp4&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337" title="Download this torrent using magnet"><img src="/static/img/icon-magnet.gif" alt="Magnet link" /></a>			<a href="//piratebaytorrents.info/11068348/Big_Tit_Mother_Fuckers_4_DVDRip.mp4.11068348.TPB.torrent" title="Download this torrent"><img src="/static/img/dl.gif" class="dl" alt="Download" /></a><img src="/static/img/icon_image.gif" alt="This torrent has a cover image" title="This torrent has a cover image" /><a href="/user/PornKing"><img src="/static/img/vip.gif" alt="VIP" title="VIP" style="width:11px;" border='0' /></a><img src="/static/img/11x11p.png" />
+			<font class="detDesc">Uploaded <b>15&nbsp;mins&nbsp;ago</b>, Size 981.78&nbsp;MiB, ULed by <a class="detDesc" href="/user/PornKing/" title="Browse PornKing">PornKing</a></font>
+		</td>
+		<td align="right">0</td>
+		<td align="right">0</td>
+	</tr>
+	<tr>
+`
+
+	s := NewSite()
+	torrents := s.parseSearch(input)
+	if len(torrents) != 4 {
+		t.Errorf("Parsed torrents length mismatch: %d != 4", len(torrents))
+		fmt.Println("ugly dump:")
+		for _, tr := range torrents {
+			fmt.Println(tr)
+		}
+	}
+}
+
 func TestStringers(t *testing.T) {
 	s := NewSite()
 	if s.String() != fmt.Sprintf("%s", ROOTURI) {
@@ -210,6 +307,14 @@ func TestStringers(t *testing.T) {
 	o := &Ordering{Title: "test", ID: "0"}
 	if o.String() != "test" {
 		t.Errorf("Ordering stringer mismatch")
+	}
+	f := &File{Title: "test.txt", Size: 12}
+	if f.String() != "test.txt" {
+		t.Errorf("File stringer mismatch")
+	}
+	torrent := &Torrent{Title: "test", ID: "1"}
+	if torrent.String() != "test (1)" {
+		t.Errorf("Torrent stringer mismatch")
 	}
 }
 

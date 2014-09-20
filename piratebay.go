@@ -5,18 +5,23 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
 const (
-	ROOTURI        = "http://thepiratebay.org"
-	INFRAURI       = "/search/a/0/99/0"
-	CATEGORYREGEXP = "<opt.*? (.*?)=\"(.*?)\">([A-Za-z- ()/]+)?<?"
-	ORDERINGREGEXP = "/(\\d+)/0\" title=\"Order by (.*?)\""
-	SEARCHURI      = "/search/%s/0/%s/%s"
-	SEARCHREGEXP   = "<a href=\"/torrent/(\\d+)/.*?\" class=\"detLink\" title=\".*?\">(.*?)</a>.</div>.<a href=\"(.*?)\".*?Uploaded <?b?>?(.*?)<?/?b?>?, Size (.*?), ULed.*?\"right\">(.*?)</td>.*?\"right\">(.*?)</td>"
-	INFOURI        = "/ajax_details_filelist.php?id=%s"
-	INFOREGEXP     = "<td align=\"left\">(.*?)</td>"
+	ROOTURI        = `http://thepiratebay.org`
+	INFRAURI       = `/search/a/0/99/0`
+	CATEGORYREGEXP = `<opt.*? (.*?)="(.*?)">([A-Za-z- ()/]+)?<?`
+	ORDERINGREGEXP = `/(\d+)/0" title="Order by (.*?)"`
+	SEARCHURI      = `/search/%s/0/%s/%s`
+	SEARCHREGEXP   = `(?s)category">(.*?)</a>.*?/browse/(\d+)".*?category">(.*?)</a>.*?torrent/(\d+)/.*?>(.*?)</a>.*?(magnet.*?)".*?(vip|11x11).*?Uploaded (.*?), Size (.*?), ULed by .*?>(.*?)<.*?right">(\d+)<.*?right">(\d+)</td>`
+	INFOURI        = `/ajax_details_filelist.php?id=%s`
+	INFOREGEXP     = `<td align="left">(.*?)</td>`
+)
+
+var (
+	killHTMLRegexp = regexp.MustCompile(`<.*?>`)
 )
 
 type Category struct {
@@ -41,6 +46,10 @@ func (o *Ordering) String() string {
 type File struct {
 	Title string
 	Size  int64
+}
+
+func (f *File) String() string {
+	return fmt.Sprintf("%s", f.Title)
 }
 
 type Site struct {
@@ -217,5 +226,84 @@ type Torrent struct {
 	Size     int64
 	Seeders  int
 	Leechers int
-	Files    []File
+	Files    []*File
+}
+
+func (t *Torrent) String() string {
+	return fmt.Sprintf("%s (%s)", t.Title, t.ID)
+}
+
+func (s *Site) parseSearch(input string) []*Torrent {
+	var torrents []*Torrent
+	var cat Category
+	var isVIP bool
+	for _, match := range s.SearchREGEXP.FindAllStringSubmatch(input, -1) {
+		group := strings.ToLower(match[1])
+		catID := match[2]
+		category := strings.ToLower(match[3])
+		cat = Category{
+			Group: group,
+			Title: category,
+			ID:    catID,
+		}
+		id := match[4]
+		title := match[5]
+		magnet := match[6]
+		if match[7] == "vip" {
+			isVIP = true
+		} else {
+			isVIP = false
+		}
+		stamp := removeHTML(match[8]) // this needs parsing into some Date
+		size := parseSize(match[9])
+		uploader := match[10]
+		seeders, err := strconv.Atoi(match[11])
+		if err != nil {
+			seeders = -1 // this needs logging
+		}
+		leechers, err := strconv.Atoi(match[12])
+		if err != nil {
+			leechers = -1 // this needs logging
+		}
+		torrents = append(torrents, &Torrent{
+			Site:     *s,
+			Category: cat,
+			ID:       id,
+			Title:    title,
+			Magnet:   magnet,
+			Uploaded: stamp,
+			User:     uploader,
+			VIPUser:  isVIP,
+			Size:     size,
+			Seeders:  seeders,
+			Leechers: leechers,
+		})
+	}
+	return torrents
+}
+
+func removeHTML(input string) string {
+	output := killHTMLRegexp.ReplaceAllString(input, "")
+	return strings.Replace(output, "&nbsp;", " ", -1)
+}
+
+func parseSize(input string) int64 {
+	input = removeHTML(input)
+	multiplier := int64(1)
+	parts := strings.Split(input, " ")
+	rawSize, err := strconv.ParseFloat(parts[0], 64) // this can kill
+	if err != nil {
+		return -1 // this needs logging
+	}
+	switch parts[1] { // this can also kill
+	case "TiB":
+		multiplier = 1024 * 1024 * 1024 * 1024
+	case "GiB":
+		multiplier = 1024 * 1024 * 1024
+	case "MiB":
+		multiplier = 1024 * 1024
+	case "KiB":
+		multiplier = 1024
+	}
+	return int64(rawSize) * multiplier
 }
