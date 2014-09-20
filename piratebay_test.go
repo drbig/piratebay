@@ -302,6 +302,23 @@ func TestSearchFake(t *testing.T) {
 			Seeders:  0,
 			Leechers: 0,
 		},
+		&Torrent{
+			Site: *s,
+			Category: Category{
+				Group: "other",
+				Title: "other",
+				ID:    "699",
+			},
+			ID:       "11068354",
+			Title:    "Nayma - Responsive Multi-Purpose WordPress Theme",
+			Magnet:   "agnet:?xt=urn:btih:55bc118cd26376b888ac1ebc8c2fbbc250c4ea02&dn=Nayma+-+Responsive+Multi-Purpose+WordPress+Theme&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337",
+			Uploaded: "11 mins ago",
+			User:     "nulledGOD",
+			VIPUser:  false,
+			Size:     24777850,
+			Seeders:  0,
+			Leechers: 0,
+		},
 	}
 
 	torrents := s.parseSearch(input)
@@ -314,7 +331,11 @@ func TestSearchFake(t *testing.T) {
 		return
 	}
 	for idx, tr := range output {
-    broken := false
+		broken := false
+		if torrents[idx].Title != tr.Title {
+			t.Errorf("Size mismatch %d != %d", torrents[idx].Title, tr.Title)
+			broken = true
+		}
 		if torrents[idx].Size != tr.Size {
 			t.Errorf("Size mismatch %d != %d", torrents[idx].Size, tr.Size)
 			broken = true
@@ -333,7 +354,7 @@ func TestSearchFake(t *testing.T) {
 		}
 		if broken {
 			fullDump(tr)
-    }
+		}
 	}
 }
 
