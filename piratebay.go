@@ -305,5 +305,5 @@ func parseSize(input string) int64 {
 	case "KiB":
 		multiplier = 1024
 	}
-	return int64(rawSize) * multiplier
+	return int64(rawSize * float64(multiplier))
 }

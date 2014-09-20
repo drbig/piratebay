@@ -283,8 +283,27 @@ func TestSearchFake(t *testing.T) {
 	</tr>
 	<tr>
 `
-
 	s := NewSite()
+	output := [...]*Torrent{
+		&Torrent{
+			Site: *s,
+			Category: Category{
+				Group: "video",
+				Title: "tv shows",
+				ID:    "205",
+			},
+			ID:       "11608355",
+			Title:    "Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG",
+			Magnet:   "magnet:?xt=urn:btih:14cf93721298e1b6694205019fce360dfbcf4164&dn=Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337",
+			Uploaded: "11 mins ago",
+			User:     "TvTeam",
+			VIPUser:  true,
+			Size:     255936430,
+			Seeders:  0,
+			Leechers: 0,
+		},
+	}
+
 	torrents := s.parseSearch(input)
 	if len(torrents) != 4 {
 		t.Errorf("Parsed torrents length mismatch: %d != 4", len(torrents))
@@ -292,7 +311,46 @@ func TestSearchFake(t *testing.T) {
 		for _, tr := range torrents {
 			fmt.Println(tr)
 		}
+		return
 	}
+	for idx, tr := range output {
+    broken := false
+		if torrents[idx].Size != tr.Size {
+			t.Errorf("Size mismatch %d != %d", torrents[idx].Size, tr.Size)
+			broken = true
+		}
+		if torrents[idx].Uploaded != tr.Uploaded {
+			t.Errorf("Uploaded mismatch %d != %d", torrents[idx].Uploaded, tr.Uploaded)
+			broken = true
+		}
+		if torrents[idx].VIPUser != tr.VIPUser {
+			t.Errorf("VIPUser mismatch %d != %d", torrents[idx].VIPUser, tr.VIPUser)
+			broken = true
+		}
+		if torrents[idx].Category.ID != tr.Category.ID {
+			t.Errorf("Category.ID mismatch %d != %d", torrents[idx].Category.ID, tr.Category.ID)
+			broken = true
+		}
+		if broken {
+			fullDump(tr)
+    }
+	}
+}
+
+func fullDump(t *Torrent) {
+	fmt.Println("Category.Group: ", t.Category.Group)
+	fmt.Println("Category.Title: ", t.Category.Title)
+	fmt.Println("Category.ID: ", t.Category.ID)
+	fmt.Println("ID: ", t.ID)
+	fmt.Println("Title: ", t.Title)
+	fmt.Println("Magnet: ", t.Magnet)
+	fmt.Println("Uploaded: ", t.Uploaded)
+	fmt.Println("User: ", t.User)
+	fmt.Println("VIPUser: ", t.VIPUser)
+	fmt.Println("Size: ", t.Size)
+	fmt.Println("Seeders: ", t.Seeders)
+	fmt.Println("Leechers: ", t.Leechers)
+	return
 }
 
 func TestStringers(t *testing.T) {
