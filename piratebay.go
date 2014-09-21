@@ -132,10 +132,14 @@ func GetFilters() []Filter {
 func ApplyFilters(trs []*Torrent, fs []FilterFunc) []*Torrent {
   var out []*Torrent
   for ti := 0; ti < len(trs); ti++ {
+    toPass := len(fs)
     for fi := 0; fi < len(fs); fi++ {
       if !fs[fi](trs[ti]) {
         break
       }
+      toPass -= 1
+    }
+    if toPass == 0 {
       out = append(out, trs[ti])
     }
   }

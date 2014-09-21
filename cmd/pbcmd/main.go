@@ -14,16 +14,19 @@ import (
 const (
 	VERSION    = "0.0.1"
 	TIMELAYOUT = "2006-01-02 15:04:05 MST"
+	FILTERSEP  = ";"
 )
 
 var (
-	flagOrder    string
-	flagCategory string
-	flagFirst    bool
-	flagMagnet   bool
-	flagDetails  bool
-	flagDebug    bool
-	flagVersion  bool
+	flagOrder       string
+	flagCategory    string
+	flagFilters     string
+	flagShowFilters bool
+	flagFirst       bool
+	flagMagnet      bool
+	flagDetails     bool
+	flagDebug       bool
+	flagVersion     bool
 )
 
 func init() {
@@ -33,6 +36,8 @@ func init() {
 	}
 	flag.StringVar(&flagOrder, "o", "seeders", "sorting order (always descending)")
 	flag.StringVar(&flagCategory, "c", "all", "category filter ('unique category' or 'group/category')")
+	flag.StringVar(&flagFilters, "fi", "", "filters to apply (in sequence)")
+	flag.BoolVar(&flagShowFilters, "filters", false, "inspect available filters (and exit)")
 	flag.BoolVar(&flagFirst, "f", false, "only print first match")
 	flag.BoolVar(&flagMagnet, "m", false, "only print magnet link")
 	flag.BoolVar(&flagDetails, "d", false, "print details for each torrent")
@@ -46,6 +51,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "pbcmd command version: %s\n", VERSION)
 		fmt.Fprintf(os.Stderr, "piratebay library version: %s\n", piratebay.VERSION)
 		return
+	}
+	if flagShowFilters {
+		for _, f := range piratebay.GetFilters() {
+			fmt.Println(f)
+		}
+		os.Exit(0)
 	}
 	if flag.NArg() < 1 {
 		flag.Usage()
@@ -85,6 +96,15 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Couldn't find category: %s\n", err)
 		os.Exit(2)
 	}
+	var filters []piratebay.FilterFunc
+	if flagFilters != "" {
+		parts := strings.Split(flagFilters, FILTERSEP)
+		filters, err = piratebay.SetupFilters(parts)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error setting up filters: %s\n", err)
+			os.Exit(2)
+		}
+	}
 
 	for i, query := range flag.Args() {
 		torrents, err := pb.Search(query, category, order)
@@ -93,7 +113,14 @@ func main() {
 			continue
 		}
 		if len(torrents) < 1 {
-			fmt.Fprintf(os.Stderr, "Nothing found for query '%s'\n", query)
+			fmt.Fprintf(os.Stderr, "Nothing found for query '%s' (raw)\n", query)
+			continue
+		}
+		if len(filters) != 0 {
+			torrents = piratebay.ApplyFilters(torrents, filters)
+		}
+		if len(torrents) < 1 {
+			fmt.Fprintf(os.Stderr, "Nothing found for query '%s' (filtered)\n", query)
 			continue
 		}
 		if flagFirst {
