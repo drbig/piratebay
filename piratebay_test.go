@@ -3,6 +3,7 @@ package piratebay
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestCategoriesFake(t *testing.T) {
@@ -198,6 +199,51 @@ func TestOrderingsFake(t *testing.T) {
 	}
 }
 
+type DateTest struct {
+	in     string
+	out    string
+	broken bool
+}
+
+func TestParseDate(t *testing.T) {
+	reference := time.Now()
+	layout := "01-02 15:04 2006"
+	cases := [...]DateTest{
+		{`<b>11&nbsp;mins&nbsp;ago</b>`, makeOffsetDate(reference, -11*time.Minute, -1, -1).Format(layout), false},
+		{`<b>30&nbsp;mins&nbsp;ago</b>`, makeOffsetDate(reference, -30*time.Minute, -1, -1).Format(layout), false},
+		{`Today&nbsp;23:59`, makeOffsetDate(reference, 0, 23, 59).Format(layout), false},
+		{`Today&nbsp;14:23`, makeOffsetDate(reference, 0, 14, 23).Format(layout), false},
+		{`Today&nbsp;02:11`, makeOffsetDate(reference, 0, 2, 11).Format(layout), false},
+		{`Y-day&nbsp;03:00`, makeOffsetDate(reference, -24*time.Hour, 3, 0).Format(layout), false},
+		{`05-12&nbsp;11:09`, fmt.Sprintf("05-12 11:09 %d", reference.Year()), false},
+		{`12-01&nbsp;23:59`, fmt.Sprintf("12-01 23:59 %d", reference.Year()), false},
+		{`07-25&nbsp;2011`, "07-25 00:00 2011", false},
+		{`01-01&nbsp;1998`, "01-01 00:00 1998", false},
+		{`whatever`, "", true},
+		{`abc minutes ago`, "", true},
+		{`Today xx:xx`, "", true},
+		{`Y-day aa:ee`, "", true},
+	}
+
+	for idx, test := range cases {
+		parsed, err := parseDate(test.in)
+		if err != nil && !test.broken {
+			t.Errorf("(%d) Erred: %s", idx+1, err)
+			continue
+		}
+		if err == nil && test.broken {
+			t.Errorf("(%d) Didn't err while it should")
+			continue
+		}
+		if !test.broken {
+			str := parsed.Format(layout)
+			if str != test.out {
+				t.Errorf("(%d) Output mismatch: %s != %s", idx+1, str, test.out)
+			}
+		}
+	}
+}
+
 func TestSearchFake(t *testing.T) {
 	input := `
 <h2><span>Search results: a</span>&nbsp;Displaying hits from 1 to 30 (approx 999 found)</h2>
@@ -244,7 +290,7 @@ func TestSearchFake(t *testing.T) {
 <div class="detName">			<a href="/torrent/11068354/Nayma_-_Responsive_Multi-Purpose_WordPress_Theme" class="detLink" title="Details for Nayma - Responsive Multi-Purpose WordPress Theme">Nayma - Responsive Multi-Purpose WordPress Theme</a>
 </div>
 <a href="magnet:?xt=urn:btih:55bc118cd26376b888ac1ebc8c2fbbc250c4ea02&dn=Nayma+-+Responsive+Multi-Purpose+WordPress+Theme&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337" title="Download this torrent using magnet"><img src="/static/img/icon-magnet.gif" alt="Magnet link" /></a>			<a href="//piratebaytorrents.info/11068354/Nayma_-_Responsive_Multi-Purpose_WordPress_Theme.11068354.TPB.torrent" title="Download this torrent"><img src="/static/img/dl.gif" class="dl" alt="Download" /></a><img src="/static/img/icon_image.gif" alt="This torrent has a cover image" title="This torrent has a cover image" /><img src="/static/img/11x11p.png" /><img src="/static/img/11x11p.png" />
-			<font class="detDesc">Uploaded <b>11&nbsp;mins&nbsp;ago</b>, Size 23.63&nbsp;MiB, ULed by <a class="detDesc" href="/user/nulledGOD/" title="Browse nulledGOD">nulledGOD</a></font>
+			<font class="detDesc">Uploaded <b>15&nbsp;mins&nbsp;ago</b>, Size 23.63&nbsp;MiB, ULed by <a class="detDesc" href="/user/nulledGOD/" title="Browse nulledGOD">nulledGOD</a></font>
 		</td>
 		<td align="right">0</td>
 		<td align="right">0</td>
@@ -295,7 +341,7 @@ func TestSearchFake(t *testing.T) {
 			ID:       "11608355",
 			Title:    "Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG",
 			Magnet:   "magnet:?xt=urn:btih:14cf93721298e1b6694205019fce360dfbcf4164&dn=Would.I.Lie.To.You.S08E02.HDTV.XviD-AFG&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337",
-			Uploaded: "11 mins ago",
+			Uploaded: time.Now().Add(-11 * time.Minute),
 			User:     "TvTeam",
 			VIPUser:  true,
 			Size:     255936430,
@@ -312,7 +358,7 @@ func TestSearchFake(t *testing.T) {
 			ID:       "11068354",
 			Title:    "Nayma - Responsive Multi-Purpose WordPress Theme",
 			Magnet:   "agnet:?xt=urn:btih:55bc118cd26376b888ac1ebc8c2fbbc250c4ea02&dn=Nayma+-+Responsive+Multi-Purpose+WordPress+Theme&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337",
-			Uploaded: "11 mins ago",
+			Uploaded: time.Now().Add(-15 * time.Minute),
 			User:     "nulledGOD",
 			VIPUser:  false,
 			Size:     24777850,
@@ -320,6 +366,7 @@ func TestSearchFake(t *testing.T) {
 			Leechers: 0,
 		},
 	}
+	layout := "01-02 15:04 2006"
 
 	torrents := s.parseSearch(input)
 	if len(torrents) != 4 {
@@ -340,8 +387,8 @@ func TestSearchFake(t *testing.T) {
 			t.Errorf("Size mismatch %d != %d", torrents[idx].Size, tr.Size)
 			broken = true
 		}
-		if torrents[idx].Uploaded != tr.Uploaded {
-			t.Errorf("Uploaded mismatch %d != %d", torrents[idx].Uploaded, tr.Uploaded)
+		if torrents[idx].Uploaded.Format(layout) != tr.Uploaded.Format(layout) {
+			t.Errorf("Uploaded mismatch %s != %s", torrents[idx].Uploaded, tr.Uploaded)
 			broken = true
 		}
 		if torrents[idx].VIPUser != tr.VIPUser {

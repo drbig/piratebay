@@ -3,10 +3,13 @@ package piratebay
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -64,6 +67,7 @@ type Site struct {
 	Categories     map[string]map[string]string
 	Orderings      map[string]string
 	Client         *http.Client
+	Logger         *log.Logger
 
 	infraData string
 }
@@ -81,6 +85,7 @@ func NewSite() *Site {
 		Categories:     nil,
 		Orderings:      nil,
 		Client:         &http.Client{},
+		Logger:         log.New(os.Stderr, "DEBUG: ", log.Lshortfile),
 	}
 }
 
@@ -220,7 +225,7 @@ type Torrent struct {
 	ID       string
 	Title    string
 	Magnet   string
-	Uploaded string
+	Uploaded time.Time
 	User     string
 	VIPUser  bool
 	Size     int64
@@ -254,16 +259,24 @@ func (s *Site) parseSearch(input string) []*Torrent {
 		} else {
 			isVIP = false
 		}
-		stamp := removeHTML(match[8]) // this needs parsing into some Date
+		stamp, err := parseDate(match[8])
+		if err != nil {
+			s.Logger.Println("Error parsing date from '%s': %s", match[8], err)
+		}
 		size := parseSize(match[9])
+		if size < 0 {
+			s.Logger.Println("Error parsing size from '%s'", match[9])
+		}
 		uploader := match[10]
 		seeders, err := strconv.Atoi(match[11])
 		if err != nil {
-			seeders = -1 // this needs logging
+			s.Logger.Println("Error parsing seeders from '%s'", match[11])
+			seeders = -1
 		}
 		leechers, err := strconv.Atoi(match[12])
 		if err != nil {
-			leechers = -1 // this needs logging
+			s.Logger.Println("Error parsing leechers from '%s'", match[12])
+			leechers = -1
 		}
 		torrents = append(torrents, &Torrent{
 			Site:     *s,
@@ -291,11 +304,14 @@ func parseSize(input string) int64 {
 	input = removeHTML(input)
 	multiplier := int64(1)
 	parts := strings.Split(input, " ")
-	rawSize, err := strconv.ParseFloat(parts[0], 64) // this can kill
-	if err != nil {
-		return -1 // this needs logging
+	if len(parts) != 2 {
+		return -1
 	}
-	switch parts[1] { // this can also kill
+	rawSize, err := strconv.ParseFloat(parts[0], 64)
+	if err != nil {
+		return -1
+	}
+	switch parts[1] {
 	case "TiB":
 		multiplier = 1024 * 1024 * 1024 * 1024
 	case "GiB":
@@ -306,4 +322,63 @@ func parseSize(input string) int64 {
 		multiplier = 1024
 	}
 	return int64(rawSize * float64(multiplier))
+}
+
+func makeOffsetDate(ref time.Time, offset time.Duration, hour, minute int) time.Time {
+	ref = ref.Add(offset)
+	if hour == -1 || minute == -1 {
+		return ref
+	}
+	return time.Date(
+		ref.Year(),
+		ref.Month(),
+		ref.Day(),
+		hour,
+		minute,
+		0, 0,
+		ref.Location(),
+	)
+}
+
+func parseDate(input string) (time.Time, error) {
+	input = removeHTML(input)
+	parts := strings.Split(input, " ")
+	reference := time.Now()
+	if len(parts) < 2 {
+		return reference, fmt.Errorf("Not enough string parts")
+	}
+	if parts[len(parts)-1] == "ago" {
+		mins, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return reference, fmt.Errorf("Cloudn't parse minutes ago")
+		}
+		return reference.Add(time.Duration(-mins) * time.Minute), nil
+	}
+	if parts[0] == "Today" {
+		parsed, err := time.Parse("15:04", parts[1])
+		if err != nil {
+			return reference, fmt.Errorf("Couldn't parse today")
+		}
+		return makeOffsetDate(reference, 0, parsed.Hour(), parsed.Minute()), nil
+	}
+	if parts[0] == "Y-day" {
+		parsed, err := time.Parse("15:04", parts[1])
+		if err != nil {
+			return reference, fmt.Errorf("Couldn't parse y-day")
+		}
+		return makeOffsetDate(reference, -24*time.Hour, parsed.Hour(), parsed.Minute()), nil
+	}
+	parsed, err := time.Parse("01-02 15:04", input)
+	if err == nil {
+		return time.Date(
+			reference.Year(),
+			parsed.Month(),
+			parsed.Day(),
+			parsed.Hour(),
+			parsed.Minute(),
+			0, 0,
+			reference.Location(),
+		), nil
+	}
+	return time.Parse("01-02 2006", input)
 }
