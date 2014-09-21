@@ -283,8 +283,8 @@ func TestTorrentDetailsFake(t *testing.T) {
 		t.Errorf("Parsing details failed")
 		return
 	}
-	if tr.Size != 1469073700 {
-		t.Errorf("Size mismatch: %d != 1469073700", tr.Size)
+	if tr.SizeInt != 1469073700 {
+		t.Errorf("Size mismatch: %d != 1469073700", tr.SizeInt)
 	}
 	if str := tr.Uploaded.Format(layout); str != "2008-01-12 00:09:20 GMT" {
 		t.Errorf("Uploaded mismatch: %s != 2008-01-12 00:09:20 GMT", str)
@@ -326,8 +326,8 @@ func TestTorrentFilesFake(t *testing.T) {
 		if file.Path != output[idx].path {
 			t.Errorf("(%d) Path mismatch: %s != %s", file.Path, output[idx].path)
 		}
-		if file.Size != output[idx].size {
-			t.Errorf("(%d) Size mismatch: %d != %d", file.Size, output[idx].size)
+		if file.SizeInt != output[idx].size {
+			t.Errorf("(%d) Size mismatch: %d != %d", file.SizeInt, output[idx].size)
 		}
 	}
 }
@@ -400,7 +400,7 @@ func TestSearchFake(t *testing.T) {
 			Uploaded: time.Now().Add(-11 * time.Minute),
 			User:     "TvTeam",
 			VIPUser:  true,
-			Size:     255936430,
+			SizeInt:  255936430,
 			Seeders:  0,
 			Leechers: 0,
 		},
@@ -417,7 +417,7 @@ func TestSearchFake(t *testing.T) {
 			Uploaded: time.Now().Add(-15 * time.Minute),
 			User:     "nulledGOD",
 			VIPUser:  false,
-			Size:     24777850,
+			SizeInt:  24777850,
 			Seeders:  0,
 			Leechers: 0,
 		},
@@ -439,8 +439,8 @@ func TestSearchFake(t *testing.T) {
 			t.Errorf("Size mismatch %d != %d", torrents[idx].Title, tr.Title)
 			broken = true
 		}
-		if torrents[idx].Size != tr.Size {
-			t.Errorf("Size mismatch %d != %d", torrents[idx].Size, tr.Size)
+		if torrents[idx].SizeInt != tr.SizeInt {
+			t.Errorf("Size mismatch %d != %d", torrents[idx].SizeInt, tr.SizeInt)
 			broken = true
 		}
 		if torrents[idx].Uploaded.Format(layout) != tr.Uploaded.Format(layout) {
@@ -456,24 +456,25 @@ func TestSearchFake(t *testing.T) {
 			broken = true
 		}
 		if broken {
-			fullDump(tr)
+			torrentFullDump(tr)
 		}
 	}
 }
 
-func fullDump(t *Torrent) {
+func torrentFullDump(t *Torrent) {
 	fmt.Println("Category.Group: ", t.Category.Group)
 	fmt.Println("Category.Title: ", t.Category.Title)
-	fmt.Println("Category.ID: ", t.Category.ID)
-	fmt.Println("ID: ", t.ID)
-	fmt.Println("Title: ", t.Title)
-	fmt.Println("Magnet: ", t.Magnet)
-	fmt.Println("Uploaded: ", t.Uploaded)
-	fmt.Println("User: ", t.User)
-	fmt.Println("VIPUser: ", t.VIPUser)
-	fmt.Println("Size: ", t.Size)
-	fmt.Println("Seeders: ", t.Seeders)
-	fmt.Println("Leechers: ", t.Leechers)
+	fmt.Println("Category.ID:    ", t.Category.ID)
+	fmt.Println("ID:             ", t.ID)
+	fmt.Println("Title:          ", t.Title)
+	fmt.Println("Magnet:         ", t.Magnet)
+	fmt.Println("Uploaded:       ", t.Uploaded)
+	fmt.Println("User:           ", t.User)
+	fmt.Println("VIPUser:        ", t.VIPUser)
+	fmt.Println("SizeStr:        ", t.SizeStr)
+	fmt.Println("SizeInt:        ", t.SizeInt)
+	fmt.Println("Seeders:        ", t.Seeders)
+	fmt.Println("Leechers:       ", t.Leechers)
 	return
 }
 
@@ -482,15 +483,15 @@ func TestStringers(t *testing.T) {
 	if s.String() != fmt.Sprintf("%s", ROOTURI) {
 		t.Errorf("Site stringer mismatch")
 	}
-	c := &Category{Group: "test", Title: "test", ID: "0"}
+	c := &Category{Group: "test", Title: "test"}
 	if c.String() != "test/test" {
 		t.Errorf("Category stringer mismatch")
 	}
-	o := &Ordering{Title: "test", ID: "0"}
+	o := &Ordering{Title: "test"}
 	if o.String() != "test" {
 		t.Errorf("Ordering stringer mismatch")
 	}
-	f := &File{Path: "/test.txt", Size: 12}
+	f := &File{Path: "/test.txt"}
 	if f.String() != "/test.txt" {
 		t.Errorf("File stringer mismatch")
 	}

@@ -13,6 +13,10 @@ import (
 )
 
 const (
+	VERSION = "0.0.1"
+)
+
+const (
 	ROOTURI        = `http://thepiratebay.org`
 	INFRAURI       = `/search/a/0/99/0`
 	CATEGORYREGEXP = `<opt.*? (.*?)="(.*?)">([A-Za-z- ()/]+)?<?`
@@ -49,8 +53,9 @@ func (o *Ordering) String() string {
 }
 
 type File struct {
-	Path string
-	Size int64
+	Path    string
+	SizeStr string
+	SizeInt int64
 }
 
 func (f *File) String() string {
@@ -100,6 +105,7 @@ func (s *Site) String() string {
 }
 
 func (s *Site) makeRequest(uri string) (string, error) {
+	s.Logger.Printf("Making request for %s", uri)
 	res, err := s.Client.Get(uri)
 	if err != nil {
 		return "", err
@@ -117,6 +123,7 @@ func (s *Site) makeRequest(uri string) (string, error) {
 
 func (s *Site) getInfraData() (string, error) {
 	if s.infraData != "" {
+		s.Logger.Println("Using cached infraData")
 		return s.infraData, nil
 	}
 	data, err := s.makeRequest(s.RootURI + s.InfraURI)
@@ -233,7 +240,7 @@ func (s *Site) FindOrdering(ordering string) (*Ordering, error) {
 	}, nil
 }
 
-func (s *Site) Search(query string, c Category, o Ordering) ([]*Torrent, error) {
+func (s *Site) Search(query string, c *Category, o *Ordering) ([]*Torrent, error) {
 	var torrents []*Torrent
 	data, err := s.makeRequest(s.RootURI + fmt.Sprintf(s.SearchURI, query, o.ID, c.ID))
 	if err != nil {
@@ -251,7 +258,8 @@ type Torrent struct {
 	Uploaded time.Time
 	User     string
 	VIPUser  bool
-	Size     int64
+	SizeStr  string
+	SizeInt  int64
 	Seeders  int
 	Leechers int
 	Files    []*File
@@ -263,8 +271,13 @@ func (t *Torrent) String() string {
 	return fmt.Sprintf("%s (%s)", t.Title, t.ID)
 }
 
+func (t *Torrent) InfoURI() string {
+	return t.Site.RootURI + fmt.Sprintf(t.Site.InfoURI, t.ID)
+}
+
 func (t *Torrent) GetDetails() error {
 	if t.detailed {
+		t.Site.Logger.Println("Torrent already had details")
 		return nil
 	}
 	data, err := t.Site.makeRequest(t.Site.RootURI + fmt.Sprintf(t.Site.InfoURI, t.ID))
@@ -277,6 +290,7 @@ func (t *Torrent) GetDetails() error {
 
 func (t *Torrent) GetFiles() error {
 	if len(t.Files) > 0 {
+		t.Site.Logger.Println("Torrent already had files")
 		return nil
 	}
 	data, err := t.Site.makeRequest(t.Site.RootURI + fmt.Sprintf(t.Site.FilesURI, t.ID))
@@ -296,7 +310,7 @@ func (t *Torrent) parseDetails(input string) {
 	if err != nil {
 		t.Site.Logger.Printf("Error parsing detailed size for %s from '%s'\n", t, match[1])
 	} else {
-		t.Size = size
+		t.SizeInt = size
 	}
 	stamp, err := time.Parse("2006-01-02 15:04:05 MST", match[2])
 	if err != nil {
@@ -310,11 +324,12 @@ func (t *Torrent) parseDetails(input string) {
 
 func (t *Torrent) parseFiles(input string) error {
 	for _, match := range t.Site.FilesREGEXP.FindAllStringSubmatch(input, -1) {
-		size := parseSize(match[2])
-		if size < 0 {
+		sizeStr := removeHTML(match[2])
+		sizeInt := parseSize(match[2])
+		if sizeInt < 0 {
 			t.Site.Logger.Printf("Error parsing size for %s from '%s'", t, match[2])
 		}
-		t.Files = append(t.Files, &File{Path: match[1], Size: size})
+		t.Files = append(t.Files, &File{Path: match[1], SizeStr: sizeStr, SizeInt: sizeInt})
 	}
 	if len(t.Files) < 1 {
 		return fmt.Errorf("No files found")
@@ -347,8 +362,9 @@ func (s *Site) parseSearch(input string) []*Torrent {
 		if err != nil {
 			s.Logger.Printf("Error parsing date from '%s': %s\n", match[8], err)
 		}
-		size := parseSize(match[9])
-		if size < 0 {
+		sizeStr := removeHTML(match[9])
+		sizeInt := parseSize(match[9])
+		if sizeInt < 0 {
 			s.Logger.Printf("Error parsing size from '%s'\n", match[9])
 		}
 		uploader := match[10]
@@ -371,7 +387,8 @@ func (s *Site) parseSearch(input string) []*Torrent {
 			Uploaded: stamp,
 			User:     uploader,
 			VIPUser:  isVIP,
-			Size:     size,
+			SizeStr:  sizeStr,
+			SizeInt:  sizeInt,
 			Seeders:  seeders,
 			Leechers: leechers,
 		})
