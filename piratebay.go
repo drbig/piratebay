@@ -19,8 +19,10 @@ const (
 	ORDERINGREGEXP = `/(\d+)/0" title="Order by (.*?)"`
 	SEARCHURI      = `/search/%s/0/%s/%s`
 	SEARCHREGEXP   = `(?s)category">(.*?)</a>.*?/browse/(\d+)".*?category">(.*?)</a>.*?torrent/(\d+)/.*?>(.*?)</a>.*?(magnet.*?)".*?(vip|11x11).*?Uploaded (.*?), Size (.*?), ULed by .*?>(.*?)<.*?right">(\d+)<.*?right">(\d+)</td>`
-	INFOURI        = `/ajax_details_filelist.php?id=%s`
-	INFOREGEXP     = `<td align="left">(.*?)</td>`
+	INFOURI        = `/torrent/%s`
+	INFOREGEXP     = `(?s)Size:.*?\((.*?)&nbsp;Bytes\).*?Uploaded:.*?d>(.*?)</d`
+	FILESURI       = `/ajax_details_filelist.php?id=%s`
+	FILESREGEXP    = `left">(.*?)</td.*?right">(.*?)<`
 )
 
 var (
@@ -47,12 +49,12 @@ func (o *Ordering) String() string {
 }
 
 type File struct {
-	Title string
-	Size  int64
+	Path string
+	Size int64
 }
 
 func (f *File) String() string {
-	return fmt.Sprintf("%s", f.Title)
+	return fmt.Sprintf("%s", f.Path)
 }
 
 type Site struct {
@@ -60,10 +62,12 @@ type Site struct {
 	InfraURI       string
 	SearchURI      string
 	InfoURI        string
+	FilesURI       string
 	CategoryREGEXP *regexp.Regexp
 	OrderingREGEXP *regexp.Regexp
 	SearchREGEXP   *regexp.Regexp
 	InfoREGEXP     *regexp.Regexp
+	FilesREGEXP    *regexp.Regexp
 	Categories     map[string]map[string]string
 	Orderings      map[string]string
 	Client         *http.Client
@@ -78,10 +82,12 @@ func NewSite() *Site {
 		InfraURI:       INFRAURI,
 		SearchURI:      SEARCHURI,
 		InfoURI:        INFOURI,
+		FilesURI:       FILESURI,
 		CategoryREGEXP: regexp.MustCompile(CATEGORYREGEXP),
 		OrderingREGEXP: regexp.MustCompile(ORDERINGREGEXP),
 		SearchREGEXP:   regexp.MustCompile(SEARCHREGEXP),
 		InfoREGEXP:     regexp.MustCompile(INFOREGEXP),
+		FilesREGEXP:    regexp.MustCompile(FILESREGEXP),
 		Categories:     nil,
 		Orderings:      nil,
 		Client:         &http.Client{},
@@ -93,24 +99,32 @@ func (s *Site) String() string {
 	return fmt.Sprintf("%s", s.RootURI)
 }
 
-func (s *Site) getInfraData() (string, error) {
-	if s.infraData != "" {
-		return s.infraData, nil
-	}
-	res, err := s.Client.Get(s.RootURI + s.InfraURI)
+func (s *Site) makeRequest(uri string) (string, error) {
+	res, err := s.Client.Get(uri)
 	if err != nil {
 		return "", err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		return "", fmt.Errorf("Unsuccessful request: %d", res.StatusCode)
+		return "", fmt.Errorf("Unsuccessful request for '%s': %d", uri, res.StatusCode)
 	}
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return "", err
 	}
-	s.infraData = string(data)
-	return s.infraData, nil
+	return string(data), nil
+}
+
+func (s *Site) getInfraData() (string, error) {
+	if s.infraData != "" {
+		return s.infraData, nil
+	}
+	data, err := s.makeRequest(s.RootURI + s.InfraURI)
+	if err != nil {
+		return "", nil
+	}
+	s.infraData = data
+	return data, nil
 }
 
 func (s *Site) UpdateCategories() error {
@@ -219,6 +233,15 @@ func (s *Site) FindOrdering(ordering string) (*Ordering, error) {
 	}, nil
 }
 
+func (s *Site) Search(query string, c Category, o Ordering) ([]*Torrent, error) {
+	var torrents []*Torrent
+	data, err := s.makeRequest(s.RootURI + fmt.Sprintf(s.SearchURI, query, o.ID, c.ID))
+	if err != nil {
+		return torrents, err
+	}
+	return s.parseSearch(data), nil
+}
+
 type Torrent struct {
 	Site
 	Category
@@ -232,10 +255,71 @@ type Torrent struct {
 	Seeders  int
 	Leechers int
 	Files    []*File
+
+	detailed bool
 }
 
 func (t *Torrent) String() string {
 	return fmt.Sprintf("%s (%s)", t.Title, t.ID)
+}
+
+func (t *Torrent) GetDetails() error {
+	if t.detailed {
+		return nil
+	}
+	data, err := t.Site.makeRequest(t.Site.RootURI + fmt.Sprintf(t.Site.InfoURI, t.ID))
+	if err != nil {
+		return err
+	}
+	t.parseDetails(data)
+	return nil
+}
+
+func (t *Torrent) GetFiles() error {
+	if len(t.Files) > 0 {
+		return nil
+	}
+	data, err := t.Site.makeRequest(t.Site.RootURI + fmt.Sprintf(t.Site.FilesURI, t.ID))
+	if err != nil {
+		return err
+	}
+	return t.parseFiles(data)
+}
+
+func (t *Torrent) parseDetails(input string) {
+	match := t.Site.InfoREGEXP.FindStringSubmatch(input)
+	if len(match) != 3 {
+		t.Site.Logger.Printf("Error parsing details for %s\n", t)
+		return
+	}
+	size, err := strconv.ParseInt(match[1], 10, 64)
+	if err != nil {
+		t.Site.Logger.Printf("Error parsing detailed size for %s from '%s'\n", t, match[1])
+	} else {
+		t.Size = size
+	}
+	stamp, err := time.Parse("2006-01-02 15:04:05 MST", match[2])
+	if err != nil {
+		t.Site.Logger.Printf("Error parsing date for %s from '%s'\n", t, match[2])
+	} else {
+		t.Uploaded = stamp
+	}
+	t.detailed = true
+	return
+}
+
+func (t *Torrent) parseFiles(input string) error {
+	for _, match := range t.Site.FilesREGEXP.FindAllStringSubmatch(input, -1) {
+		size := parseSize(match[2])
+		if size < 0 {
+			t.Site.Logger.Printf("Error parsing size for %s from '%s'", t, match[2])
+		}
+		t.Files = append(t.Files, &File{Path: match[1], Size: size})
+	}
+	if len(t.Files) < 1 {
+		return fmt.Errorf("No files found")
+	}
+	return nil
 }
 
 func (s *Site) parseSearch(input string) []*Torrent {
@@ -261,21 +345,21 @@ func (s *Site) parseSearch(input string) []*Torrent {
 		}
 		stamp, err := parseDate(match[8])
 		if err != nil {
-			s.Logger.Println("Error parsing date from '%s': %s", match[8], err)
+			s.Logger.Printf("Error parsing date from '%s': %s\n", match[8], err)
 		}
 		size := parseSize(match[9])
 		if size < 0 {
-			s.Logger.Println("Error parsing size from '%s'", match[9])
+			s.Logger.Printf("Error parsing size from '%s'\n", match[9])
 		}
 		uploader := match[10]
 		seeders, err := strconv.Atoi(match[11])
 		if err != nil {
-			s.Logger.Println("Error parsing seeders from '%s'", match[11])
+			s.Logger.Printf("Error parsing seeders from '%s'\n", match[11])
 			seeders = -1
 		}
 		leechers, err := strconv.Atoi(match[12])
 		if err != nil {
-			s.Logger.Println("Error parsing leechers from '%s'", match[12])
+			s.Logger.Printf("Error parsing leechers from '%s'\n", match[12])
 			leechers = -1
 		}
 		torrents = append(torrents, &Torrent{

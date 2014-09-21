@@ -199,7 +199,7 @@ func TestOrderingsFake(t *testing.T) {
 	}
 }
 
-type DateTest struct {
+type dateTest struct {
 	in     string
 	out    string
 	broken bool
@@ -208,7 +208,7 @@ type DateTest struct {
 func TestParseDate(t *testing.T) {
 	reference := time.Now()
 	layout := "01-02 15:04 2006"
-	cases := [...]DateTest{
+	cases := [...]dateTest{
 		{`<b>11&nbsp;mins&nbsp;ago</b>`, makeOffsetDate(reference, -11*time.Minute, -1, -1).Format(layout), false},
 		{`<b>30&nbsp;mins&nbsp;ago</b>`, makeOffsetDate(reference, -30*time.Minute, -1, -1).Format(layout), false},
 		{`Today&nbsp;23:59`, makeOffsetDate(reference, 0, 23, 59).Format(layout), false},
@@ -240,6 +240,94 @@ func TestParseDate(t *testing.T) {
 			if str != test.out {
 				t.Errorf("(%d) Output mismatch: %s != %s", idx+1, str, test.out)
 			}
+		}
+	}
+}
+
+func TestTorrentDetailsFake(t *testing.T) {
+	input := `
+		<dt>Size:</dt>
+		<dd>1.37&nbsp;GiB&nbsp;(1469073700&nbsp;Bytes)</dd>
+
+			<dt>Spoken language(s):</dt>
+			<dd>English</dd>
+		
+		
+			</dl>
+	<dl class="col2">
+		<dt>Uploaded:</dt>
+		<dd>2008-01-12 00:09:20 GMT</dd>
+		<dt>By:</dt>
+		<dd>
+		<a href="/user/flareup/" title="Browse flareup">flareup</a></dd>
+		<dt>Seeders:</dt>
+		<dd>0</dd>
+
+		<dt>Leechers:</dt>
+		<dd>2</dd>
+
+		<dt>Comments</dt>
+		<dd><span id="NumComments">2</span>
+				&nbsp;
+				</dd>
+
+                <br />
+                <dt>Info Hash:</dt><dd>&nbsp;</dd>
+                F827F00809B195A168B6B88D1DAC6695E0B93418	</dl>
+`
+	s := NewSite()
+	tr := &Torrent{Site: *s}
+	layout := "2006-01-02 15:04:05 MST"
+	tr.parseDetails(input)
+	if !tr.detailed {
+		t.Errorf("Parsing details failed")
+		return
+	}
+	if tr.Size != 1469073700 {
+		t.Errorf("Size mismatch: %d != 1469073700", tr.Size)
+	}
+	if str := tr.Uploaded.Format(layout); str != "2008-01-12 00:09:20 GMT" {
+		t.Errorf("Uploaded mismatch: %s != 2008-01-12 00:09:20 GMT", str)
+	}
+}
+
+type filesTest struct {
+	path string
+	size int64
+}
+
+func TestTorrentFilesFake(t *testing.T) {
+	input := `
+<div style="background:#FFFFFF none repeat scroll 0%clear:left;margin:0;min-height:0px;padding:0;width:100%;">
+<table style="border:0pt none;width:100%;font-family:verdana,Arial,Helvetica,sans-serif;font-size:11px;">
+<tr><td align="left">Cowboy Bebop - 23 - Brain Scratch.mp4</td><td align="right">516.27&nbsp;MiB</tr>
+<tr><td align="left">Cowboy Bebop - 18 - Speak Like A Child.mp4</td><td align="right">332.62&nbsp;MiB</tr>
+<tr><td align="left">Cowboy Bebop - 20 - Pierrot le Fou.mp4</td><td align="right">324.77&nbsp;MiB</tr>
+</table>
+`
+	output := [...]filesTest{
+		{`Cowboy Bebop - 23 - Brain Scratch.mp4`, 541348331},
+		{`Cowboy Bebop - 18 - Speak Like A Child.mp4`, 348777349},
+		{`Cowboy Bebop - 20 - Pierrot le Fou.mp4`, 340546027},
+	}
+
+	s := NewSite()
+	tr := &Torrent{Site: *s}
+	err := tr.parseFiles(input)
+	if err != nil {
+		t.Errorf("Parsing files failed")
+		return
+	}
+	if len(tr.Files) != len(output) {
+		t.Errorf("Parsed files length mismatch: %d != %d", len(tr.Files), len(output))
+		return
+	}
+	for idx, file := range tr.Files {
+		if file.Path != output[idx].path {
+			t.Errorf("(%d) Path mismatch: %s != %s", file.Path, output[idx].path)
+		}
+		if file.Size != output[idx].size {
+			t.Errorf("(%d) Size mismatch: %d != %d", file.Size, output[idx].size)
 		}
 	}
 }
@@ -296,38 +384,6 @@ func TestSearchFake(t *testing.T) {
 		<td align="right">0</td>
 	</tr>
 	<tr>
-		<td class="vertTh">
-			<center>
-				<a href="/browse/500" title="More from this category">Porn</a><br />
-				(<a href="/browse/501" title="More from this category">Movies</a>)
-			</center>
-		</td>
-		<td>
-<div class="detName">			<a href="/torrent/11068352/Girlfriends_Films_-_Cheer_Squad_Sleepovers_9" class="detLink" title="Details for Girlfriends Films - Cheer Squad Sleepovers 9">Girlfriends Films - Cheer Squad Sleepovers 9</a>
-</div>
-<a href="magnet:?xt=urn:btih:e0fda0867e7c7ddf0517461b6a9063656f3a3d3e&dn=Girlfriends+Films+-+Cheer+Squad+Sleepovers+9&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337" title="Download this torrent using magnet"><img src="/static/img/icon-magnet.gif" alt="Magnet link" /></a>			<a href="//piratebaytorrents.info/11068352/Girlfriends_Films_-_Cheer_Squad_Sleepovers_9.11068352.TPB.torrent" title="Download this torrent"><img src="/static/img/dl.gif" class="dl" alt="Download" /></a><img src="/static/img/icon_image.gif" alt="This torrent has a cover image" title="This torrent has a cover image" /><a href="/user/irealu69"><img src="/static/img/vip.gif" alt="VIP" title="VIP" style="width:11px;" border='0' /></a><img src="/static/img/11x11p.png" />
-			<font class="detDesc">Uploaded <b>15&nbsp;mins&nbsp;ago</b>, Size 1.47&nbsp;GiB, ULed by <a class="detDesc" href="/user/irealu69/" title="Browse irealu69">irealu69</a></font>
-		</td>
-		<td align="right">0</td>
-		<td align="right">0</td>
-	</tr>
-	<tr>
-		<td class="vertTh">
-			<center>
-				<a href="/browse/500" title="More from this category">Porn</a><br />
-				(<a href="/browse/501" title="More from this category">Movies</a>)
-			</center>
-		</td>
-		<td>
-<div class="detName">			<a href="/torrent/11068348/Big_Tit_Mother_Fuckers_4_DVDRip.mp4" class="detLink" title="Details for Big Tit Mother Fuckers 4 DVDRip.mp4">Big Tit Mother Fuckers 4 DVDRip.mp4</a>
-</div>
-<a href="magnet:?xt=urn:btih:98171109d50ab8c83b9a53d0ba86ef829de3cd05&dn=Big+Tit+Mother+Fuckers+4+DVDRip.mp4&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337" title="Download this torrent using magnet"><img src="/static/img/icon-magnet.gif" alt="Magnet link" /></a>			<a href="//piratebaytorrents.info/11068348/Big_Tit_Mother_Fuckers_4_DVDRip.mp4.11068348.TPB.torrent" title="Download this torrent"><img src="/static/img/dl.gif" class="dl" alt="Download" /></a><img src="/static/img/icon_image.gif" alt="This torrent has a cover image" title="This torrent has a cover image" /><a href="/user/PornKing"><img src="/static/img/vip.gif" alt="VIP" title="VIP" style="width:11px;" border='0' /></a><img src="/static/img/11x11p.png" />
-			<font class="detDesc">Uploaded <b>15&nbsp;mins&nbsp;ago</b>, Size 981.78&nbsp;MiB, ULed by <a class="detDesc" href="/user/PornKing/" title="Browse PornKing">PornKing</a></font>
-		</td>
-		<td align="right">0</td>
-		<td align="right">0</td>
-	</tr>
-	<tr>
 `
 	s := NewSite()
 	output := [...]*Torrent{
@@ -369,8 +425,8 @@ func TestSearchFake(t *testing.T) {
 	layout := "01-02 15:04 2006"
 
 	torrents := s.parseSearch(input)
-	if len(torrents) != 4 {
-		t.Errorf("Parsed torrents length mismatch: %d != 4", len(torrents))
+	if len(torrents) != 2 {
+		t.Errorf("Parsed torrents length mismatch: %d != 2", len(torrents))
 		fmt.Println("ugly dump:")
 		for _, tr := range torrents {
 			fmt.Println(tr)
@@ -434,8 +490,8 @@ func TestStringers(t *testing.T) {
 	if o.String() != "test" {
 		t.Errorf("Ordering stringer mismatch")
 	}
-	f := &File{Title: "test.txt", Size: 12}
-	if f.String() != "test.txt" {
+	f := &File{Path: "/test.txt", Size: 12}
+	if f.String() != "/test.txt" {
 		t.Errorf("File stringer mismatch")
 	}
 	torrent := &Torrent{Title: "test", ID: "1"}
