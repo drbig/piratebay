@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/drbig/piratebay"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/drbig/piratebay"
 )
 
 const (
@@ -30,12 +31,12 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] query query...\n\n", os.Args[0])
 		flag.PrintDefaults()
 	}
-	flag.StringVar(&flagOrder, "o", "seeders", "sorting order")
-	flag.StringVar(&flagCategory, "c", "all", "category filter")
+	flag.StringVar(&flagOrder, "o", "seeders", "sorting order (always descending)")
+	flag.StringVar(&flagCategory, "c", "all", "category filter ('unique category' or 'group/category')")
 	flag.BoolVar(&flagFirst, "f", false, "only print first match")
 	flag.BoolVar(&flagMagnet, "m", false, "only print magnet link")
 	flag.BoolVar(&flagDetails, "d", false, "print details for each torrent")
-	flag.BoolVar(&flagDebug, "debug", false, "enable debug logging")
+	flag.BoolVar(&flagDebug, "debug", false, "enable library debug output")
 	flag.BoolVar(&flagVersion, "version", false, "show version and exit")
 }
 
@@ -123,7 +124,7 @@ func printDetails(tr *piratebay.Torrent) {
 		tr.Leechers,
 	)
 	fmt.Printf("       %s\n", tr.InfoURI())
-  fmt.Printf("       Files: _______________________________________________________________\n")
+	fmt.Printf("       Files: _______________________________________________________________\n")
 	for idx, file := range tr.Files {
 		fmt.Printf("  %3d  %-58s  %10s\n", idx+1, file.Path, file.SizeStr)
 	}
