@@ -9,8 +9,16 @@ import (
 	"strings"
 )
 
+const (
+	FILTERSEP = ":" // separator for filter arguments
+)
+
+// FilterFunc is a signature of a Torrent filtering function.
+// The function should return true if the Torrent passes the filter
+// conditions, false otherwise.
 type FilterFunc func(*Torrent) bool
 
+// Filter represents a named filter.
 type Filter struct {
 	Name string
 	Args string
@@ -19,7 +27,7 @@ type Filter struct {
 }
 
 var (
-	filters map[string]Filter
+	filters map[string]Filter // global slice of filters
 )
 
 func init() {
@@ -27,10 +35,14 @@ func init() {
 	initFilters()
 }
 
+// String returns a pretty string representation of a Filter.
+// The returned string contains the 'signature' needed to use
+// the filter.
 func (f Filter) String() string {
 	return fmt.Sprintf("%s(%s) - %s", f.Name, f.Args, f.Desc)
 }
 
+// RegisterFilter registers the Filter in the global slice of Filters.
 func RegisterFilter(f Filter) {
 	if _, present := filters[f.Name]; present {
 		panic(fmt.Sprintf("Filter '%s' already registered", f.Name))
@@ -38,6 +50,8 @@ func RegisterFilter(f Filter) {
 	filters[f.Name] = f
 }
 
+// SetupFilters parses a string description of Filters and returns
+// a corresponding slice of initialised FilterFuncs.
 func SetupFilters(fs []string) ([]FilterFunc, error) {
 	var out []FilterFunc
 	for _, f := range fs {
@@ -70,6 +84,7 @@ func SetupFilters(fs []string) ([]FilterFunc, error) {
 	return out, nil
 }
 
+// GetFilters returns a slice of currently registered Filters.
 func GetFilters() []Filter {
 	var fs []Filter
 	for _, f := range filters {
@@ -78,6 +93,7 @@ func GetFilters() []Filter {
 	return fs
 }
 
+// ApplyFilters filters a slice of Torrents by applying a slice of FilterFuncs.
 func ApplyFilters(trs []*Torrent, fs []FilterFunc) []*Torrent {
 	var out []*Torrent
 	for ti := 0; ti < len(trs); ti++ {
@@ -95,6 +111,9 @@ func ApplyFilters(trs []*Torrent, fs []FilterFunc) []*Torrent {
 	return out
 }
 
+// initFilters registers the currently defined Filters.
+// This may change in the future.
+// TODO: Figure out a nicer way of adding Filters.
 func initFilters() {
 	RegisterFilter(Filter{
 		Name: "seeders",

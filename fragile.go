@@ -11,19 +11,19 @@ import (
 // doesn't change too much one will only need to make tweaks here.
 // At least that's the idea.
 const (
-	ROOTURI        = `http://thepiratebay.org`
-	INFRAURI       = `/search/a/0/99/0`
-	CATEGORYREGEXP = `<opt.*? (.*?)="(.*?)">([A-Za-z- ()/]+)?<?`
-	ORDERINGREGEXP = `/(\d+)/0" title="Order by (.*?)"`
-	SEARCHURI      = `/search/%s/0/%s/%s`
-	SEARCHREGEXP   = `(?s)category">(.*?)</a>.*?/browse/(\d+)".*?category">(.*?)</a>.*?torrent/(\d+)/.*?>(.*?)</a>.*?(magnet.*?)".*?(vip|11x11).*?Uploaded (.*?), Size (.*?), ULed by .*?>(.*?)<.*?right">(\d+)<.*?right">(\d+)</td>`
-	INFOURI        = `/torrent/%s`
-	INFOREGEXP     = `(?s)Size:.*?\((.*?)&nbsp;Bytes\).*?Uploaded:.*?d>(.*?)</d`
-	FILESURI       = `/ajax_details_filelist.php?id=%s`
-	FILESREGEXP    = `left">(.*?)</td.*?right">(.*?)<`
+	ROOTURI        = `http://thepiratebay.org`                                                                                                                                                                                        // PirateBay root URI
+	INFRAURI       = `/search/a/0/99/0`                                                                                                                                                                                               // URI for fetching 'infrastructure' data
+	CATEGORYREGEXP = `<opt.*? (.*?)="(.*?)">([A-Za-z- ()/]+)?<?`                                                                                                                                                                      // Regexp for Category data extraction
+	ORDERINGREGEXP = `/(\d+)/0" title="Order by (.*?)"`                                                                                                                                                                               // Regexp for Ordering data extraction
+	SEARCHURI      = `/search/%s/0/%s/%s`                                                                                                                                                                                             // URI for search queries
+	SEARCHREGEXP   = `(?s)category">(.*?)</a>.*?/browse/(\d+)".*?category">(.*?)</a>.*?torrent/(\d+)/.*?>(.*?)</a>.*?(magnet.*?)".*?(vip|11x11).*?Uploaded (.*?), Size (.*?), ULed by .*?>(.*?)<.*?right">(\d+)<.*?right">(\d+)</td>` // Regexp for extracting search results
+	INFOURI        = `/torrent/%s`                                                                                                                                                                                                    // URI for fetching Torrent details
+	INFOREGEXP     = `(?s)Size:.*?\((.*?)&nbsp;Bytes\).*?Uploaded:.*?d>(.*?)</d`                                                                                                                                                      // Regexp for Torrent details extraction
+	FILESURI       = `/ajax_details_filelist.php?id=%s`                                                                                                                                                                               // URI for fetching Torrent Files data
+	FILESREGEXP    = `left">(.*?)</td.*?right">(.*?)<`                                                                                                                                                                                // Regexp for extracting File data
 )
 
 // This should be treated as a const.
 var (
-	killHTMLRegexp = regexp.MustCompile(`<.*?>`)
+	killHTMLRegexp = regexp.MustCompile(`<.*?>`) // Regexp used for removing HTML
 )

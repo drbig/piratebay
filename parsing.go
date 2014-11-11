@@ -9,34 +9,7 @@ import (
 	"time"
 )
 
-func (s *Site) parseCategories(input string) {
-	var group string
-	s.Categories = make(map[string]map[string]string, 8)
-	s.Categories[""] = make(map[string]string, 1)
-	for _, match := range s.CategoryREGEXP.FindAllStringSubmatch(input, -1) {
-		switch match[1] {
-		case "label":
-			group = strings.ToLower(match[2])
-			if _, present := s.Categories[group]; !present {
-				s.Categories[group] = make(map[string]string, 8)
-			}
-		case "value":
-			category := strings.ToLower(match[3])
-			s.Categories[group][category] = match[2]
-		}
-	}
-	return
-}
-
-func (s *Site) parseOrderings(input string) {
-	s.Orderings = make(map[string]string, 9)
-	for _, match := range s.OrderingREGEXP.FindAllStringSubmatch(input, -1) {
-		ordering := strings.ToLower(match[2])
-		s.Orderings[ordering] = match[1]
-	}
-	return
-}
-
+// parseDetails parses and fills in Torrent details.
 func (t *Torrent) parseDetails(input string) {
 	match := t.Site.InfoREGEXP.FindStringSubmatch(input)
 	if len(match) != 3 {
@@ -59,6 +32,7 @@ func (t *Torrent) parseDetails(input string) {
 	return
 }
 
+// parseFile parses and fills in Torrent Files slice.
 func (t *Torrent) parseFiles(input string) error {
 	for _, match := range t.Site.FilesREGEXP.FindAllStringSubmatch(input, -1) {
 		sizeStr := removeHTML(match[2])
@@ -74,6 +48,38 @@ func (t *Torrent) parseFiles(input string) error {
 	return nil
 }
 
+// parseCategories parses and fills in Site Categories.
+func (s *Site) parseCategories(input string) {
+	var group string
+	s.Categories = make(map[string]map[string]string, 8)
+	s.Categories[""] = make(map[string]string, 1)
+	for _, match := range s.CategoryREGEXP.FindAllStringSubmatch(input, -1) {
+		switch match[1] {
+		case "label":
+			group = strings.ToLower(match[2])
+			if _, present := s.Categories[group]; !present {
+				s.Categories[group] = make(map[string]string, 8)
+			}
+		case "value":
+			category := strings.ToLower(match[3])
+			s.Categories[group][category] = match[2]
+		}
+	}
+	return
+}
+
+// parseOrderings parses and fills in Site Orderings.
+func (s *Site) parseOrderings(input string) {
+	s.Orderings = make(map[string]string, 9)
+	for _, match := range s.OrderingREGEXP.FindAllStringSubmatch(input, -1) {
+		ordering := strings.ToLower(match[2])
+		s.Orderings[ordering] = match[1]
+	}
+	return
+}
+
+// parseSearch parses search query results and returns a slice of pointers
+// to Torrents.
 func (s *Site) parseSearch(input string) []*Torrent {
 	var torrents []*Torrent
 	var cat Category
@@ -133,11 +139,15 @@ func (s *Site) parseSearch(input string) []*Torrent {
 	return torrents
 }
 
+// removeHTML is a helper function that removes HTML from a string.
+// It uses the global killHTMLRegexp regexp.
 func removeHTML(input string) string {
 	output := killHTMLRegexp.ReplaceAllString(input, "")
 	return strings.Replace(output, "&nbsp;", " ", -1)
 }
 
+// parseSize is a helper function that parses human-readable size
+// string into an int64.
 func parseSize(input string) int64 {
 	input = removeHTML(input)
 	multiplier := int64(1)
@@ -162,6 +172,7 @@ func parseSize(input string) int64 {
 	return int64(rawSize * float64(multiplier))
 }
 
+// makeOffsetDate is a helper function for parsing relative dates.
 func makeOffsetDate(ref time.Time, offset time.Duration, hour, minute int) time.Time {
 	ref = ref.Add(offset)
 	if hour == -1 || minute == -1 {
@@ -178,6 +189,8 @@ func makeOffsetDate(ref time.Time, offset time.Duration, hour, minute int) time.
 	)
 }
 
+// parseDate is a helper function that parses a string representation
+// of a date as used on PirateBay.
 func parseDate(input string) (time.Time, error) {
 	input = removeHTML(input)
 	parts := strings.Split(input, " ")
