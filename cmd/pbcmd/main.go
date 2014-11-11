@@ -12,32 +12,38 @@ import (
 )
 
 const (
-	VERSION    = "0.0.1"
+	VERSION    = "0.0.2"
 	TIMELAYOUT = "2006-01-02 15:04:05 MST"
 	FILTERSEP  = ";"
 )
 
 var (
-	flagOrder       string
-	flagCategory    string
-	flagFilters     string
-	flagShowFilters bool
-	flagFirst       bool
-	flagMagnet      bool
-	flagDetails     bool
-	flagDebug       bool
-	flagVersion     bool
+	flagOrder          string
+	flagCategory       string
+	flagFilters        string
+	flagShowFilters    bool
+	flagShowOrders     bool
+	flagShowCategories bool
+	flagFirst          bool
+	flagMagnet         bool
+	flagDetails        bool
+	flagDebug          bool
+	flagVersion        bool
 )
 
 func init() {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [options] query query...\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Won't run any queries if any of -sf, -so, and -sc options have been supplied.\n")
+		fmt.Fprintf(os.Stderr, "Running a query or using -so or -sc requires a connection to PirateBay.\n\n")
 		flag.PrintDefaults()
 	}
 	flag.StringVar(&flagOrder, "o", "seeders", "sorting order (always descending)")
 	flag.StringVar(&flagCategory, "c", "all", "category filter ('unique category' or 'group/category')")
-	flag.StringVar(&flagFilters, "fi", "", "filters to apply (in sequence)")
-	flag.BoolVar(&flagShowFilters, "filters", false, "inspect available filters (and exit)")
+	flag.StringVar(&flagFilters, "filters", "", "filters to apply (in sequence)")
+	flag.BoolVar(&flagShowFilters, "sf", false, "print available filters")
+	flag.BoolVar(&flagShowOrders, "so", false, "fetch and print available orderings")
+	flag.BoolVar(&flagShowCategories, "sc", false, "fetch and print available categories")
 	flag.BoolVar(&flagFirst, "f", false, "only print first match")
 	flag.BoolVar(&flagMagnet, "m", false, "only print magnet link")
 	flag.BoolVar(&flagDetails, "d", false, "print details for each torrent")
@@ -53,29 +59,41 @@ func main() {
 		return
 	}
 	if flagShowFilters {
+		fmt.Println("Available filters:")
 		for _, f := range piratebay.GetFilters() {
 			fmt.Println(f)
 		}
+	}
+	pb := piratebay.NewSite()
+	if !flagDebug {
+		pb.Logger = log.New(ioutil.Discard, "", 0)
+	}
+	if flagShowOrders {
+		loadOrderings(pb)
+		fmt.Println("Available sort orders:")
+		for o, _ := range pb.Orderings {
+			fmt.Println(o)
+		}
+	}
+	if flagShowCategories {
+		loadCategories(pb)
+		fmt.Println("Available categories:")
+		for group, cats := range pb.Categories {
+			for c, _ := range cats {
+				fmt.Printf("%s/%s\n", group, c)
+			}
+		}
+	}
+	if flagShowFilters || flagShowOrders || flagShowCategories {
 		os.Exit(0)
 	}
 	if flag.NArg() < 1 {
 		flag.Usage()
 		os.Exit(1)
 	}
-	pb := piratebay.NewSite()
-	if !flagDebug {
-		pb.Logger = log.New(ioutil.Discard, "", 0)
-	}
-	err := pb.UpdateOrderings()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't load orderings: %s\n", err)
-		os.Exit(2)
-	}
-	err = pb.UpdateCategories()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't load categories: %s\n", err)
-		os.Exit(2)
-	}
+
+	loadOrderings(pb)
+	loadCategories(pb)
 	order, err := pb.FindOrdering(flagOrder)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't find ordering: %s\n", err)
@@ -137,6 +155,22 @@ func main() {
 				printDetails(tr)
 			}
 		}
+	}
+}
+
+func loadOrderings(pb *piratebay.Site) {
+	err := pb.UpdateOrderings()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't load orderings: %s\n", err)
+		os.Exit(2)
+	}
+}
+
+func loadCategories(pb *piratebay.Site) {
+	err := pb.UpdateCategories()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't load categories: %s\n", err)
+		os.Exit(2)
 	}
 }
 
