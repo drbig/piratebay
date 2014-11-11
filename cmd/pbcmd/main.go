@@ -1,3 +1,5 @@
+// See LICENSE.txt for licensing information.
+
 package main
 
 import (
@@ -56,7 +58,8 @@ func main() {
 	if flagVersion {
 		fmt.Fprintf(os.Stderr, "pbcmd command version: %s\n", VERSION)
 		fmt.Fprintf(os.Stderr, "piratebay library version: %s\n", piratebay.VERSION)
-		return
+		fmt.Fprintln(os.Stderr, "See LICENSE.txt for legal details.")
+		os.Exit(0)
 	}
 	if flagShowFilters {
 		fmt.Println("Available filters:")

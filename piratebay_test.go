@@ -1,3 +1,5 @@
+// See LICENSE.txt for licensing information.
+
 package piratebay
 
 import (
