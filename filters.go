@@ -151,6 +151,7 @@ func initFilters() {
 			switch arg {
 			case "exclude":
 				return func(tr *Torrent) bool {
+					tr.GetFiles()
 					ok := true
 					for _, f := range tr.Files {
 						if regexp.MatchString(f.Path) {
