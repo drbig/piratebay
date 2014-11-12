@@ -1,4 +1,4 @@
-# piratebay
+# piratebay [![Build Status](https://travis-ci.org/drbig/piratebay.svg?branch=master)](https://travis-ci.org/drbig/piratebay) [![Coverage Status](https://img.shields.io/coveralls/drbig/piratebay.svg)](https://coveralls.io/r/drbig/piratebay?branch=master)
 
 A Go library implementing robust and comprehensive searching of PirateBay.
 
@@ -197,7 +197,7 @@ Running `go test` will *make requests to PirateBay*. Running `go test -short` wi
 
 Current test coverage is between around 51% - 59%, for fake-data-only and full tests respectively.
 
-I have a todo item to get myself acquainted with at least one CI system available out there, and this project tops the list as it's a library.
+~~I have a todo item to get myself acquainted with at least one CI system available out there, and this project tops the list as it's a library.~~
 
 Right after tests is the topic of the filters framework. I'd like them to be easy to add, maybe even loadable at runtime (no idea how to approach that yet). Feel free to go wild here.
 
