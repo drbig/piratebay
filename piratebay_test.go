@@ -246,6 +246,29 @@ func TestParseDate(t *testing.T) {
 	}
 }
 
+type sizeTest struct {
+	text  string
+	value int64
+}
+
+func TestParseSize(t *testing.T) {
+	cases := [...]sizeTest{
+		{"", -1},
+		{"bad size", -1},
+		{"1.2 TiB", 1319413953331},
+		{"0.89 GiB", 955630223},
+		{"321.12 MiB", 336718725},
+		{"12.3 KiB", 12595},
+	}
+
+	for idx, test := range cases {
+		val := parseSize(test.text)
+		if val != test.value {
+			t.Errorf("(%d) Output mismatch: %d != %d", idx+1, val, test.value)
+		}
+	}
+}
+
 func TestTorrentDetailsFake(t *testing.T) {
 	input := `
 		<dt>Size:</dt>
@@ -457,6 +480,9 @@ func TestSearchFake(t *testing.T) {
 			t.Errorf("Category.ID mismatch %d != %d", torrents[idx].Category.ID, tr.Category.ID)
 			broken = true
 		}
+		if tr.InfoURI() != s.RootURI+fmt.Sprintf(s.InfoURI, tr.ID) {
+			t.Errorf("Wrong InfoURI")
+		}
 		if broken {
 			torrentFullDump(tr)
 		}
@@ -501,6 +527,17 @@ func TestStringers(t *testing.T) {
 	if torrent.String() != "test (1)" {
 		t.Errorf("Torrent stringer mismatch")
 	}
+	filter := &Filter{
+		Name: "seeders",
+		Args: "min - int | max - int",
+		Desc: "Filter by torrent min/max seeders",
+		Init: func(arg, value string) (FilterFunc, error) {
+			return nil, nil
+		},
+	}
+	if filter.String() != "seeders(min - int | max - int) - Filter by torrent min/max seeders" {
+		t.Errorf("Filter stringer mismatch")
+	}
 }
 
 func TestCategoriesReal(t *testing.T) {
@@ -536,5 +573,118 @@ func TestOrderingsReal(t *testing.T) {
 	}
 	if _, err := s.FindOrdering("seeders"); err != nil {
 		t.Errorf("Ordering 'seeders' not found?")
+	}
+}
+
+func TestRegisterFilter(t *testing.T) {
+	filter := Filter{
+		Name: "test",
+		Args: "none",
+		Desc: "Fake filter",
+		Init: func(arg, value string) (FilterFunc, error) {
+			return nil, nil
+		},
+	}
+	RegisterFilter(filter)
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Didn't panic on already added filter")
+		}
+	}()
+	RegisterFilter(filter)
+}
+
+func TestSetupFilters(t *testing.T) {
+	if _, err := SetupFilters([]string{""}); err == nil {
+		t.Errorf("Didn't fail on empty filter string")
+	}
+	if _, err := SetupFilters([]string{":"}); err == nil {
+		t.Errorf("Didn't fail on malformed filter string")
+	}
+	if _, err := SetupFilters([]string{"fake:what:ever"}); err == nil {
+		t.Errorf("Didn't fail on not registered filter string")
+	}
+	filter := Filter{
+		Name: "bad",
+		Args: "none",
+		Desc: "Will never setup",
+		Init: func(arg, value string) (FilterFunc, error) {
+			return nil, fmt.Errorf("This filter doesn't work")
+		},
+	}
+	RegisterFilter(filter)
+	if _, err := SetupFilters([]string{"bad"}); err == nil {
+		t.Errorf("Didn't fail on the bad filter (1)")
+	}
+	if _, err := SetupFilters([]string{"bad:what:ever"}); err == nil {
+		t.Errorf("Didn't fail on the bad filter (2)")
+	}
+	if _, err := SetupFilters([]string{"test"}); err != nil {
+		t.Errorf("Fail to setup the test filter (1)")
+	}
+	if _, err := SetupFilters([]string{"test:what:ever"}); err != nil {
+		t.Errorf("Fail to setup the test filter (2)")
+	}
+}
+
+func TestGetFilters(t *testing.T) {
+	// seeders, files + test, bad
+	if len(GetFilters()) != 4 {
+		t.Errorf("Wrong number of filters returned (check test)")
+	}
+}
+
+func TestApplyFilters(t *testing.T) {
+	RegisterFilter(Filter{
+		Name: "pass",
+		Args: "none",
+		Desc: "Will pass anything",
+		Init: func(arg, value string) (FilterFunc, error) {
+			return func(tr *Torrent) bool {
+				return true
+			}, nil
+		},
+	})
+	RegisterFilter(Filter{
+		Name: "mordor",
+		Args: "none",
+		Desc: "None shall pass!",
+		Init: func(arg, value string) (FilterFunc, error) {
+			return func(tr *Torrent) bool {
+				return false
+			}, nil
+		},
+	})
+	torrents := []*Torrent{
+		&Torrent{},
+		&Torrent{},
+		&Torrent{},
+	}
+	fs, err := SetupFilters([]string{"pass"})
+	if err != nil {
+		t.Errorf("Couldn't setup pass filter")
+	} else {
+		res := ApplyFilters(torrents, fs)
+		if len(res) != len(torrents) {
+			t.Errorf("Pass filter failed?")
+		}
+	}
+	fs, err = SetupFilters([]string{"mordor"})
+	if err != nil {
+		t.Errorf("Couldn't setup mordor filter")
+	} else {
+		res := ApplyFilters(torrents, fs)
+		if len(res) != 0 {
+			t.Errorf("Mordor filter failed?")
+		}
+	}
+	fs, err = SetupFilters([]string{"pass", "mordor"})
+	if err != nil {
+		t.Errorf("Couldn't setup pass, mordor filter chain")
+	} else {
+		res := ApplyFilters(torrents, fs)
+		if len(res) != 0 {
+			t.Errorf("Chained filters failed?")
+		}
 	}
 }
