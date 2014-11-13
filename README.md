@@ -1,4 +1,4 @@
-# piratebay [![Build Status](https://travis-ci.org/drbig/piratebay.svg?branch=master)](https://travis-ci.org/drbig/piratebay) [![Coverage Status](https://img.shields.io/coveralls/drbig/piratebay.svg)](https://coveralls.io/r/drbig/piratebay?branch=master)
+# piratebay [![Build Status](https://travis-ci.org/drbig/piratebay.svg?branch=master)](https://travis-ci.org/drbig/piratebay) [![Coverage Status](https://img.shields.io/coveralls/drbig/piratebay.svg)](https://coveralls.io/r/drbig/piratebay?branch=master) [![GoDoc](https://godoc.org/github.com/drbig/piratebay?status.svg)](http://godoc.org/github.com/drbig/piratebay)
 
 A Go library implementing robust and comprehensive searching of PirateBay.
 
