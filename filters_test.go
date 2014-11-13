@@ -123,6 +123,65 @@ func TestFilterLeechers(t *testing.T) {
 	}
 }
 
+func TestFilterSize(t *testing.T) {
+	cases := [...]filterTest{
+		{[]string{"size:x:broken"}, true, nil, 0},
+		{[]string{"size:broken:1"}, true, nil, 0},
+		{
+			[]string{"size:min:100000000"}, // at least ~100 mb
+			false,
+			[]*Torrent{
+				&Torrent{SizeInt: 1869169767219},
+				&Torrent{SizeInt: 24696061952},
+				&Torrent{SizeInt: 537112084},
+				&Torrent{SizeInt: 440320},
+				&Torrent{SizeInt: 256},
+			},
+			3,
+		},
+		{
+			[]string{"size:max:100000000"}, // at most ~100 mb
+			false,
+			[]*Torrent{
+				&Torrent{SizeInt: 1869169767219},
+				&Torrent{SizeInt: 24696061952},
+				&Torrent{SizeInt: 537112084},
+				&Torrent{SizeInt: 440320},
+				&Torrent{SizeInt: 256},
+			},
+			2,
+		},
+		{
+			[]string{"size:max:3000000000", "size:min:1000000000"}, // 1 gb ~ 3 gb
+			false,
+			[]*Torrent{
+				&Torrent{SizeInt: 2684354560},
+				&Torrent{SizeInt: 1869169767219},
+				&Torrent{SizeInt: 24696061952},
+				&Torrent{SizeInt: 1073741824},
+				&Torrent{SizeInt: 537112084},
+				&Torrent{SizeInt: 440320},
+				&Torrent{SizeInt: 256},
+			},
+			2,
+		},
+	}
+
+	for idx, test := range cases {
+		fs, err := SetupFilters(test.call)
+		if (err != nil) == !test.fails {
+			t.Errorf("(%d) Couldn't setup filter '%s'", idx+1, test.call)
+		} else {
+			if test.input != nil {
+				res := ApplyFilters(test.input, fs)
+				if len(res) != test.outlen {
+					t.Errorf("(%d) Output length mismatch: %d != %d", idx+1, len(res), test.outlen)
+				}
+			}
+		}
+	}
+}
+
 func TestFilterFiles(t *testing.T) {
 	pb := NewSite()
 	pb.Logger = log.New(ioutil.Discard, "", 0)

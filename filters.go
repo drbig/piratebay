@@ -164,6 +164,30 @@ func initFilters() {
 	})
 
 	RegisterFilter(Filter{
+		Name: "size",
+		Args: "min - int | max - int",
+		Desc: "Filter by torrent total min/max size",
+		Init: func(arg, value string) (FilterFunc, error) {
+			valueInt, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			switch arg {
+			case "min":
+				return func(tr *Torrent) bool {
+					return (tr.SizeInt >= valueInt)
+				}, nil
+			case "max":
+				return func(tr *Torrent) bool {
+					return tr.SizeInt <= valueInt
+				}, nil
+			default:
+				return nil, fmt.Errorf("Unknown arg '%s'", arg)
+			}
+		},
+	})
+
+	RegisterFilter(Filter{
 		Name: "files",
 		Args: "include - regexp | exclude - regexp",
 		Desc: "Filter by torrent files' name include/exclude",
@@ -202,4 +226,6 @@ func initFilters() {
 			}
 		},
 	})
+
+
 }
