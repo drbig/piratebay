@@ -10,7 +10,7 @@ Features:
 - Stratified fetching and parsing of details
 - From basic search result down to file details per torrent
 - Extensible filters framework
-- Currently filters for number of seeders and file list
+- Currently filters for: seeders, leechers, total size, file names
 - Static and live test suite (needs more love though)
 - Pure Go, no additional dependencies
 - Includes a minimal command line interface example
