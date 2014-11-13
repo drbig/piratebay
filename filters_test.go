@@ -66,6 +66,63 @@ func TestFilterSeeders(t *testing.T) {
 	}
 }
 
+func TestFilterLeechers(t *testing.T) {
+	cases := [...]filterTest{
+		{[]string{"leechers:x:broken"}, true, nil, 0},
+		{[]string{"leechers:broken:1"}, true, nil, 0},
+		{
+			[]string{"leechers:min:100"},
+			false,
+			[]*Torrent{
+				&Torrent{Leechers: 232},
+				&Torrent{Leechers: 13},
+				&Torrent{Leechers: 123},
+				&Torrent{Leechers: 12},
+				&Torrent{Leechers: 113},
+			},
+			3,
+		},
+		{
+			[]string{"leechers:max:100"},
+			false,
+			[]*Torrent{
+				&Torrent{Leechers: 232},
+				&Torrent{Leechers: 13},
+				&Torrent{Leechers: 123},
+				&Torrent{Leechers: 12},
+				&Torrent{Leechers: 113},
+			},
+			2,
+		},
+		{
+			[]string{"leechers:max:150", "leechers:min:100"},
+			false,
+			[]*Torrent{
+				&Torrent{Leechers: 232},
+				&Torrent{Leechers: 13},
+				&Torrent{Leechers: 123},
+				&Torrent{Leechers: 12},
+				&Torrent{Leechers: 113},
+			},
+			2,
+		},
+	}
+
+	for idx, test := range cases {
+		fs, err := SetupFilters(test.call)
+		if (err != nil) == !test.fails {
+			t.Errorf("(%d) Couldn't setup filter '%s'", idx+1, test.call)
+		} else {
+			if test.input != nil {
+				res := ApplyFilters(test.input, fs)
+				if len(res) != test.outlen {
+					t.Errorf("(%d) Output length mismatch: %d != %d", idx+1, len(res), test.outlen)
+				}
+			}
+		}
+	}
+}
+
 func TestFilterFiles(t *testing.T) {
 	pb := NewSite()
 	pb.Logger = log.New(ioutil.Discard, "", 0)

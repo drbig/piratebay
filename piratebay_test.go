@@ -628,9 +628,11 @@ func TestSetupFilters(t *testing.T) {
 }
 
 func TestGetFilters(t *testing.T) {
-	// seeders, files + test, bad
-	if len(GetFilters()) != 4 {
-		t.Errorf("Wrong number of filters returned (check test)")
+  fsLen := len(GetFilters())
+	// seeders, leechers, files + test, bad
+  expected := 5
+	if fsLen != expected {
+    t.Errorf("Wrong number of filters returned (check test): %d != %d", fsLen, expected)
 	}
 }
 

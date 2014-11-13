@@ -140,6 +140,30 @@ func initFilters() {
 	})
 
 	RegisterFilter(Filter{
+		Name: "leechers",
+		Args: "min - int | max - int",
+		Desc: "Filter by torrent min/max leechers",
+		Init: func(arg, value string) (FilterFunc, error) {
+			valueInt, err := strconv.Atoi(value)
+			if err != nil {
+				return nil, err
+			}
+			switch arg {
+			case "min":
+				return func(tr *Torrent) bool {
+					return (tr.Leechers >= valueInt)
+				}, nil
+			case "max":
+				return func(tr *Torrent) bool {
+					return tr.Leechers <= valueInt
+				}, nil
+			default:
+				return nil, fmt.Errorf("Unknown arg '%s'", arg)
+			}
+		},
+	})
+
+	RegisterFilter(Filter{
 		Name: "files",
 		Args: "include - regexp | exclude - regexp",
 		Desc: "Filter by torrent files' name include/exclude",
