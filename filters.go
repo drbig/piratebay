@@ -227,5 +227,4 @@ func initFilters() {
 		},
 	})
 
-
 }
