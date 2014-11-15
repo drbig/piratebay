@@ -37,11 +37,16 @@ Using the included *demo* `pbcmd`:
       -so=false: fetch and print available orderings
       -version=false: show version and exit
 
+- - -
 
     $ ./pbcmd -sf
     Available filters:
-    seeders(min - int | max - int) - Filter by torrent min/max seeders
     files(include - regexp | exclude - regexp) - Filter by torrent files' name include/exclude
+    seeders(min - int | max - int) - Filter by torrent min/max seeders
+    leechers(min - int | max - int) - Filter by torrent min/max leechers
+    size(min - int | max - int) - Filter by torrent total min/max size
+
+- - -
 
     $ ./pbcmd -so
     Available sort orders:
@@ -52,6 +57,8 @@ Using the included *demo* `pbcmd`:
     size
     uled by
     leechers
+
+- - -
 
     $ ./pbcmd -sc
     Available categories:
@@ -101,6 +108,7 @@ Using the included *demo* `pbcmd`:
     applications/ios (ipad/iphone)
     applications/android
 
+- - -
 
     $ ./pbcmd -d -filters "seeders:min:1;files:exclude:.*\\.rar;files:include:.*\\.iso" -c unix freebsd
      1  1  FreeBSD-9.1-RELEASE-i386-dvd1.iso                                   
@@ -185,6 +193,7 @@ Using the included *demo* `pbcmd`:
            Files: _____________________________________________________________
         1  FreeBSD-9.0-RELEASE-amd64-disc1.iso                         612.06 M
 
+- - -
 
     $ ./pbcmd -f -m -filters seeders:min:5 -c unix linux
     magnet:?xt=urn:btih:eb851063bbbe8ec29fe2ebbdc19d90df982eaeff&dn=Linux+-+Google+Chromium+i686-2.4.1290+ISO&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337
