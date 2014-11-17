@@ -1,2 +1,3 @@
 coverage.out
-cmd/pbcmd/pbcmd
+cmd/*/*
+!cmd/*/*.go
