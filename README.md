@@ -198,6 +198,23 @@ Using the included *demo* `pbcmd`:
     $ ./pbcmd -f -m -filters seeders:min:5 -c unix linux
     magnet:?xt=urn:btih:eb851063bbbe8ec29fe2ebbdc19d90df982eaeff&dn=Linux+-+Google+Chromium+i686-2.4.1290+ISO&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80&tr=udp%3A%2F%2Ftracker.istole.it%3A6969&tr=udp%3A%2F%2Fopen.demonii.com%3A1337
 
+Bonus `getlastep` command:
+
+    $ ./getlastep
+    Usage: ./getlastep [options...] show show...
+    
+      -c="": full Transmission RPC URL
+      -v=false: print version and exit
+
+- - -
+
+    $ ./getlastep -c http://user:pass@host:port House
+     1. House [2004 - Canceled/Ended]
+        S08E22 "Everybody Dies" (2012-21-05, 910 days ago)
+      - Found you a torrent:
+        House S08E22 720p HDTV x264-DIMENSION [eztv] (7288837)
+        Added torrent :)
+
 ## Development
 
 ### General notes
