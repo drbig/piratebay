@@ -74,16 +74,24 @@ func main() {
 	if flagShowOrders {
 		loadOrderings(pb)
 		fmt.Println("Available sort orders:")
-		for o, _ := range pb.Orderings {
-			fmt.Println(o)
+		for o, id := range pb.Orderings {
+			if flagDebug {
+				fmt.Printf("%s (%s)\n", o, id)
+			} else {
+				fmt.Println(o)
+			}
 		}
 	}
 	if flagShowCategories {
 		loadCategories(pb)
 		fmt.Println("Available categories:")
 		for group, cats := range pb.Categories {
-			for c, _ := range cats {
-				fmt.Printf("%s/%s\n", group, c)
+			for c, id := range cats {
+				if flagDebug {
+					fmt.Printf("%s/%s (%s)\n", group, c, id)
+				} else {
+					fmt.Printf("%s/%s\n", group, c)
+				}
 			}
 		}
 	}
