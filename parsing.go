@@ -65,6 +65,15 @@ func (s *Site) parseCategories(input string) {
 			s.Categories[group][category] = match[2]
 		}
 	}
+
+	// group/all IDs, unfortunately hard-coded for now
+	s.Categories["audio"]["all"] = "100"
+	s.Categories["video"]["all"] = "200"
+	s.Categories["applications"]["all"] = "300"
+	s.Categories["games"]["all"] = "400"
+	s.Categories["porn"]["all"] = "500"
+	s.Categories["other"]["all"] = "600"
+
 	return
 }
 
