@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	VERSION = "0.0.1" // current version of the library
+	VERSION = "0.0.2" // current version of the library
 )
 
 // Category represents a fully qualified PirateBay's category,
