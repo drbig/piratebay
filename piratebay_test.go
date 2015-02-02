@@ -40,21 +40,46 @@ func TestCategoriesFake(t *testing.T) {
 					<option value="306">Android</option>
 					<option value="399">Other OS</option>
 				</optgroup>
-`
+				<optgroup label="Games">
+					<option value="401">PC</option>
+					<option value="402">Mac</option>
+					<option value="403">PSx</option>
+					<option value="404">XBOX360</option>
+					<option value="405">Wii</option>
+					<option value="406">Handheld</option>
+					<option value="407">IOS (iPad/iPhone)</option>
+					<option value="408">Android</option>
+					<option value="499">Other</option>
+				</optgroup>
+					<optgroup label="Porn">
+					<option value="501">Movies</option>
+					<option value="502">Movies DVDR</option>
+					<option value="503">Pictures</option>
+					<option value="504">Games</option>
+					<option value="505">HD - Movies</option>
+					<option value="506">Movie clips</option>
+					<option value="599">Other</option>
+				</optgroup>
+				<optgroup label="Other">
+					<option value="601">E-books</option>
+					<option value="602">Comics</option>
+					<option value="603">Pictures</option>
+					<option value="604">Covers</option>
+					<option value="605">Physibles</option>
+					<option value="699">Other</option>
+				</optgroup>
+			</select>`
+
 	catsRaw := map[string]map[string]string{
-		"": map[string]string{
-			"all": "0",
-		},
 		"audio": map[string]string{
 			"music":       "101",
 			"audio books": "102",
 		},
 		"video": map[string]string{
-			"hd - movies":   "207",
 			"hd - tv shows": "208",
 		},
 		"applications": map[string]string{
-			"ios (ipad/iphone)": "305",
+			"unix": "303",
 		},
 	}
 
