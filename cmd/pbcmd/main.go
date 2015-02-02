@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	VERSION    = "0.0.2"
+	VERSION    = "0.0.3"
 	TIMELAYOUT = "2006-01-02 15:04:05 MST"
 	FILTERSEP  = ";"
 )
