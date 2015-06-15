@@ -10,21 +10,10 @@ A Go library implementing robust and comprehensive searching of PirateBay.
 
 **Notes**:
 
-- 2015-02-02
+- 2015-06-15
 
-After the comeback it seems that server-side filtering for categories is broken.
-I'm getting either 503 errors or just nothing found when using specific categories
-such as `video/hd - tv shows`, even though if I search for the same query without
-the category filter I see there are items within that category that matched.
-
-What seems to work though are the general categories e.g. `video/all`, so I have
-added them by hard-coding the IDs. It's far from what I would like (I would like
-fully automatic discovery), but it works and is a workaround for the above problem.
-
-It seems that with the server-side category filtering being semi-broken the filters
-available on the client-side just got more important than ever. E.g. one can simulate
-the `video/hd - tv shows` by using `video/all` server-side and then applying a size
-filter on the client-side.
+**All seems fine now**. Server-side filtering works as expected. And all we
+had to do was wait four months.
 
 Features:
 
